@@ -324,7 +324,7 @@ class StaticSearch{
       if (this.resultsPerPage > 0){
         // The selector for the result items (we define it here since it's conceivable that the
         // results may be structured differently)
-        this.resultItemsSelector = `:scope > ul > li`;
+        this.resultItemsSelector = `:scope > table.ssResultTable > tbody > tr.ssResultRow`;
         // Current page is 0
         this.currPage = 0;
         // And some null variables that are used iff the results are paginated

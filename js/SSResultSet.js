@@ -329,97 +329,139 @@ class SSResultSet{
 
 /**
   * @function SSResultSet~resultsAsHtml
-  * @description Outputs a ul element containing an li element for each
-  *              result in the search; context strings are also included,
-  *              and where a document has a defined docImage, that is also
-  *              included.
+  * @description Outputs the search results as a Goethe-Biographica-style table.
+  *              Document metadata come from ssTitles JSON; KWIC contexts remain
+  *              query-dependent and are rendered from value.contexts.
   * @param {string} strScore caption for the score assigned to a hit document.
-  * @return {Element} an unordered list (ul) element ready for insertion into 
-  *                   the host document.
+  * @return {Element} a table element ready for insertion into the host document.
   */
   resultsAsHtml(strScore){
-    let ul = document.createElement('ul');
+    let table = document.createElement('table');
+    table.setAttribute('class', 'ssResultTable gbSearchResults');
+
+    let thead = document.createElement('thead');
+    let headRow = document.createElement('tr');
+    for (const label of ['Projekt', 'Datierung', '', 'Suchkontext', 'Nummer', 'Status']){
+      let th = document.createElement('th');
+      th.appendChild(document.createTextNode(label));
+      headRow.appendChild(th);
+    }
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    let tbody = document.createElement('tbody');
+
     for (let [key, value] of this.mapDocs){
-      let li = document.createElement('li');
-      let d = document.createElement('div');
+      let tr = document.createElement('tr');
+      tr.setAttribute('class', 'ssResultRow');
+
       let docTitle = this.getTitleByDocId(value.docUri);
       let imgPath = this.getThumbnailByDocId(value.docUri);
-      //If there is a docImage, include it.
+      let project = this.getProjectByDocId(value.docUri);
+      let displayDate = this.getDisplayDateByDocId(value.docUri);
+      let number = this.getNumberByDocId(value.docUri);
+      let status = this.getStatusByDocId(value.docUri);
+
+      let tdProject = document.createElement('td');
+      tdProject.setAttribute('class', 'category ssResultProject');
+      let projectP = document.createElement('p');
+      let projectClass = this.getProjectClass(project);
+      projectP.setAttribute('class', 'button-tp' + (projectClass ? ' ' + projectClass : ''));
+      let projectSpan = document.createElement('span');
+      projectSpan.setAttribute('class', 'origin');
+      projectSpan.appendChild(document.createTextNode(project));
+      projectP.appendChild(projectSpan);
+      tdProject.appendChild(projectP);
+      tr.appendChild(tdProject);
+
+      let tdDate = document.createElement('td');
+      tdDate.setAttribute('class', 'ssResultDate');
+      tdDate.appendChild(document.createTextNode(displayDate));
+      tr.appendChild(tdDate);
+
+      let tdTitle = document.createElement('td');
+      tdTitle.setAttribute('class', 'ssResultTitle');
       if (imgPath.length > 0){
         let imgA = document.createElement('a');
         imgA.setAttribute('href', value.docUri);
+        imgA.setAttribute('class', 'target ssResultThumbnailLink');
         let img = document.createElement('img');
         img.setAttribute('alt', docTitle);
         img.setAttribute('title', docTitle);
         img.setAttribute('src', imgPath);
         imgA.appendChild(img);
-        li.appendChild(imgA);
+        tdTitle.appendChild(imgA);
       }
       let a = document.createElement('a');
       a.setAttribute('href', value.docUri);
-      let t = document.createTextNode(docTitle);
-      a.appendChild(t);
-      d.appendChild(a);
+      a.setAttribute('class', 'target');
+      a.appendChild(document.createTextNode(docTitle));
+      tdTitle.appendChild(a);
+      tr.appendChild(tdTitle);
 
-      if (value.score > 0){
-        let scoreSpan = document.createElement('span');
-        let scoreSpace = document.createTextNode(' ');
-        scoreSpan.innerHTML = strScore + value.score;
-        d.append(scoreSpace);
-        d.appendChild(scoreSpan);
-      }
-      //Now process KWIC contexts if they exist.
+      let tdContext = document.createElement('td');
+      tdContext.setAttribute('class', 'ssResultContext');
       if (value.contexts.length > 0){
-        //Sort these in document order. Suppress missing property error for compiler.
         value.contexts.sort( /** @suppress {missingProperties} */function(a, b){return a.pos - b.pos;});
-        let ul2 = document.createElement('ul');
-        ul2.setAttribute('class', 'kwic');
+        let contexts = document.createElement('div');
+        contexts.setAttribute('class', 'kwic');
         for (let i=0; i<Math.min(value.contexts.length, this.maxKwicsToShow); i++){
-          //Output the KWIC.
-          let li2 = document.createElement('li');
+          let context = document.createElement('div');
+          context.setAttribute('class', 'kwicContext');
           let sp = document.createElement('span');
           sp.innerHTML = value.contexts[i].context;
-          li2.appendChild(sp);
-          //Create a query string containing the marked text so that downstream JS can 
-          //do its own highlighting on the target page.
+          context.appendChild(sp);
+
           let cleanMark = value.contexts[i].context.replace(/.*<mark>([^<]+)<\/mark>.+/, '$1');
           let queryString = '?ssMark=' + encodeURIComponent(cleanMark);
-          //If we have a fragment id, output that.
           if (((value.contexts[i].hasOwnProperty('fid'))&&(value.contexts[i].fid != ''))){
             let fid = value.contexts[i].hasOwnProperty('fid')? value.contexts[i].fid : '';
             let a2 = document.createElement('a');
             a2.appendChild(document.createTextNode('\u21ac'));
             a2.setAttribute('href', value.docUri + queryString + '#' + fid);
             a2.setAttribute('class', 'fidLink');
-            li2.appendChild(a2);
+            context.appendChild(a2);
           }
-          else{
-            let sp2 = document.createElement('span');
-            sp2.appendChild(document.createTextNode('\u00A0'));
-            li2.appendChild(sp2);
-          }
-          //Now look for any custom properties that have been passed through
-          //from the source document's custom attributes, and if any are 
-          //present, generate attributes for them.
+
           if (value.contexts[i].hasOwnProperty('prop')){
             let props = Object.entries(value.contexts[i].prop);
-            for (const [key, value] of props){
-              li2.setAttribute('data-ss-' + key, value);
-              if (key == 'img'){
+            for (const [propKey, propValue] of props){
+              context.setAttribute('data-ss-' + propKey, propValue);
+              if (propKey == 'img'){
                 let ctxImg = document.createElement('img');
-                ctxImg.setAttribute('src', value);
-                li2.insertBefore(ctxImg, li2.firstChild);
+                ctxImg.setAttribute('src', propValue);
+                context.insertBefore(ctxImg, context.firstChild);
               }
             }
           }
-          ul2.appendChild(li2);
+          contexts.appendChild(context);
         }
-        d.appendChild(ul2);
+        tdContext.appendChild(contexts);
       }
-      li.appendChild(d);
-      ul.appendChild(li);
+      tr.appendChild(tdContext);
+
+      let tdNumber = document.createElement('td');
+      tdNumber.setAttribute('class', 'ssResultNumber');
+      tdNumber.appendChild(document.createTextNode(number));
+      tr.appendChild(tdNumber);
+
+      let tdStatus = document.createElement('td');
+      tdStatus.setAttribute('class', 'ssResultStatus');
+      let statuses = status.split('|').map(function(s){return s.trim();}).filter(function(s){return s.length > 0;});
+      for (const statusText of statuses){
+        let statusSpan = document.createElement('span');
+        statusSpan.setAttribute('class', this.getStatusClass(statusText));
+        statusSpan.setAttribute('title', statusText + ' vorhanden');
+        statusSpan.appendChild(document.createTextNode(statusText));
+        tdStatus.appendChild(statusSpan);
+      }
+      tr.appendChild(tdStatus);
+
+      tbody.appendChild(tr);
     }
-    return ul;
+
+    table.appendChild(tbody);
+    return table;
   }
 
 /** @function SSResultSet~getTitleByDocId
@@ -478,6 +520,48 @@ class SSResultSet{
     catch(e){
       return '';
     }
+  }
+
+  /** Goethe-Biographica-specific metadata appended to ssTitles JSON. */
+  getProjectByDocId(docId){
+    try{return (this.titles.get(docId).length > 3)? this.titles.get(docId)[3] : '';}
+    catch(e){return '';}
+  }
+
+  getDisplayDateByDocId(docId){
+    try{return (this.titles.get(docId).length > 4)? this.titles.get(docId)[4] : '';}
+    catch(e){return '';}
+  }
+
+  getNumberByDocId(docId){
+    try{return (this.titles.get(docId).length > 5)? this.titles.get(docId)[5] : '';}
+    catch(e){return '';}
+  }
+
+  getStatusByDocId(docId){
+    try{return (this.titles.get(docId).length > 6)? this.titles.get(docId)[6] : '';}
+    catch(e){return '';}
+  }
+
+  getProjectClass(project){
+    switch (project){
+      case 'Tagebücher': return 'gt';
+      case 'Briefe von Goethe': return 'gb';
+      case 'Briefe an Goethe': return 'ra';
+      case 'Begegnungen & Gespräche': return 'bug';
+      default: return '';
+    }
+  }
+
+  getStatusClass(status){
+    let s = status.toLowerCase();
+    if (s.indexOf('transkription') >= 0){return 'status-text';}
+    if ((s.indexOf('kommentar') >= 0)||(s.indexOf('erläuter') >= 0)){return 'status-comment';}
+    if (s.indexOf('digitalisat') >= 0){return 'status-image';}
+    if (s.indexOf('regest') >= 0){return 'status-regest';}
+    if (s.indexOf('überliefer') >= 0){return 'status-tradition';}
+    if ((s.indexOf('xml') >= 0)||(s.indexOf('tei') >= 0)){return 'status-xml';}
+    return 'status-generic';
   }
 
 /**
