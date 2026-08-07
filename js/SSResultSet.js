@@ -362,7 +362,28 @@ class SSResultSet{
 
     let tbody = document.createElement('tbody');
 
+    // Store the complete current result order and the originating search URL.
+    // The individual XHTML pages use this information for previous/next navigation.
+    let navigationDocs = Array.from(this.mapDocs.values()).map(function(value){
+      return new URL(value.docUri, window.location.href).href;
+    });
+    try{
+      sessionStorage.setItem('gbSearchNavigation', JSON.stringify({
+        searchUrl: window.location.href,
+        docs: navigationDocs
+      }));
+    }
+    catch(e){
+      // Navigation is optional; search results must still work if sessionStorage
+      // is unavailable (for example because of browser privacy settings).
+    }
+
+    let resultIndex = 0;
     for (let [key, value] of this.mapDocs){
+      let currentResultIndex = resultIndex++;
+      let resultUrl = new URL(value.docUri, window.location.href);
+      resultUrl.searchParams.set('gbResult', String(currentResultIndex));
+
       let tr = document.createElement('tr');
       tr.setAttribute('class', 'ssResultRow');
 
@@ -395,7 +416,7 @@ class SSResultSet{
       tdTitle.setAttribute('class', 'ssResultTitle');
       if (imgPath.length > 0){
         let imgA = document.createElement('a');
-        imgA.setAttribute('href', value.docUri);
+        imgA.setAttribute('href', resultUrl.href);
         imgA.setAttribute('class', 'target ssResultThumbnailLink');
         let img = document.createElement('img');
         img.setAttribute('alt', docTitle);
@@ -405,7 +426,7 @@ class SSResultSet{
         tdTitle.appendChild(imgA);
       }
       let a = document.createElement('a');
-      a.setAttribute('href', value.docUri);
+      a.setAttribute('href', resultUrl.href);
       a.setAttribute('class', 'target');
       a.appendChild(document.createTextNode(docTitle));
       tdTitle.appendChild(a);
@@ -426,12 +447,15 @@ class SSResultSet{
             context.appendChild(sp);
 
             let cleanMark = value.contexts[i].context.replace(/.*<mark>([^<]+)<\/mark>.+/, '$1');
-            let queryString = '?ssMark=' + encodeURIComponent(cleanMark);
             if (((value.contexts[i].hasOwnProperty('fid'))&&(value.contexts[i].fid != ''))){
               let fid = value.contexts[i].hasOwnProperty('fid')? value.contexts[i].fid : '';
               let a2 = document.createElement('a');
+              let contextUrl = new URL(value.docUri, window.location.href);
+              contextUrl.searchParams.set('ssMark', cleanMark);
+              contextUrl.searchParams.set('gbResult', String(currentResultIndex));
+              contextUrl.hash = fid;
               a2.appendChild(document.createTextNode('\u21ac'));
-              a2.setAttribute('href', value.docUri + queryString + '#' + fid);
+              a2.setAttribute('href', contextUrl.href);
               a2.setAttribute('class', 'fidLink');
               context.appendChild(a2);
             }
