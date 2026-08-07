@@ -339,9 +339,20 @@ class SSResultSet{
     let table = document.createElement('table');
     table.setAttribute('class', 'ssResultTable gbSearchResults');
 
+    // Show the search-context column only when the result set actually
+    // contains KWIC contexts (i.e. when a text query produced contexts).
+    let showContexts = Array.from(this.mapDocs.values()).some(function(value){
+      return value.contexts && value.contexts.length > 0;
+    });
+
     let thead = document.createElement('thead');
     let headRow = document.createElement('tr');
-    for (const label of ['Projekt', 'Datierung', '', 'Suchkontext', 'Nummer', 'Status']){
+    let labels = ['Projekt', 'Datierung', ''];
+    if (showContexts){
+      labels.push('Suchkontext');
+    }
+    labels.push('Nummer', 'Status');
+    for (const label of labels){
       let th = document.createElement('th');
       th.appendChild(document.createTextNode(label));
       headRow.appendChild(th);
@@ -368,10 +379,10 @@ class SSResultSet{
       let projectClass = this.getProjectClass(project);
       projectP.setAttribute('class', 'button-tp' + (projectClass ? ' ' + projectClass : ''));
       let projectA = document.createElement('a');
-	  projectA.setAttribute('class', 'origin');
-	  projectA.setAttribute('href', 'javascript:void(0)');
-	  projectA.appendChild(document.createTextNode(project));
-	  projectP.appendChild(projectA);
+      projectA.setAttribute('class', 'origin');
+      projectA.setAttribute('href', 'javascript:void(0)');
+      projectA.appendChild(document.createTextNode(project));
+      projectP.appendChild(projectA);
       tdProject.appendChild(projectP);
       tr.appendChild(tdProject);
 
@@ -400,46 +411,48 @@ class SSResultSet{
       tdTitle.appendChild(a);
       tr.appendChild(tdTitle);
 
-      let tdContext = document.createElement('td');
-      tdContext.setAttribute('class', 'ssResultContext');
-      if (value.contexts.length > 0){
-        value.contexts.sort( /** @suppress {missingProperties} */function(a, b){return a.pos - b.pos;});
-        let contexts = document.createElement('div');
-        contexts.setAttribute('class', 'kwic');
-        for (let i=0; i<Math.min(value.contexts.length, this.maxKwicsToShow); i++){
-          let context = document.createElement('div');
-          context.setAttribute('class', 'kwicContext');
-          let sp = document.createElement('span');
-          sp.innerHTML = value.contexts[i].context;
-          context.appendChild(sp);
+      if (showContexts){
+        let tdContext = document.createElement('td');
+        tdContext.setAttribute('class', 'ssResultContext');
+        if (value.contexts.length > 0){
+          value.contexts.sort( /** @suppress {missingProperties} */function(a, b){return a.pos - b.pos;});
+          let contexts = document.createElement('div');
+          contexts.setAttribute('class', 'kwic');
+          for (let i=0; i<Math.min(value.contexts.length, this.maxKwicsToShow); i++){
+            let context = document.createElement('div');
+            context.setAttribute('class', 'kwicContext');
+            let sp = document.createElement('span');
+            sp.innerHTML = value.contexts[i].context;
+            context.appendChild(sp);
 
-          let cleanMark = value.contexts[i].context.replace(/.*<mark>([^<]+)<\/mark>.+/, '$1');
-          let queryString = '?ssMark=' + encodeURIComponent(cleanMark);
-          if (((value.contexts[i].hasOwnProperty('fid'))&&(value.contexts[i].fid != ''))){
-            let fid = value.contexts[i].hasOwnProperty('fid')? value.contexts[i].fid : '';
-            let a2 = document.createElement('a');
-            a2.appendChild(document.createTextNode('\u21ac'));
-            a2.setAttribute('href', value.docUri + queryString + '#' + fid);
-            a2.setAttribute('class', 'fidLink');
-            context.appendChild(a2);
-          }
+            let cleanMark = value.contexts[i].context.replace(/.*<mark>([^<]+)<\/mark>.+/, '$1');
+            let queryString = '?ssMark=' + encodeURIComponent(cleanMark);
+            if (((value.contexts[i].hasOwnProperty('fid'))&&(value.contexts[i].fid != ''))){
+              let fid = value.contexts[i].hasOwnProperty('fid')? value.contexts[i].fid : '';
+              let a2 = document.createElement('a');
+              a2.appendChild(document.createTextNode('\u21ac'));
+              a2.setAttribute('href', value.docUri + queryString + '#' + fid);
+              a2.setAttribute('class', 'fidLink');
+              context.appendChild(a2);
+            }
 
-          if (value.contexts[i].hasOwnProperty('prop')){
-            let props = Object.entries(value.contexts[i].prop);
-            for (const [propKey, propValue] of props){
-              context.setAttribute('data-ss-' + propKey, propValue);
-              if (propKey == 'img'){
-                let ctxImg = document.createElement('img');
-                ctxImg.setAttribute('src', propValue);
-                context.insertBefore(ctxImg, context.firstChild);
+            if (value.contexts[i].hasOwnProperty('prop')){
+              let props = Object.entries(value.contexts[i].prop);
+              for (const [propKey, propValue] of props){
+                context.setAttribute('data-ss-' + propKey, propValue);
+                if (propKey == 'img'){
+                  let ctxImg = document.createElement('img');
+                  ctxImg.setAttribute('src', propValue);
+                  context.insertBefore(ctxImg, context.firstChild);
+                }
               }
             }
+            contexts.appendChild(context);
           }
-          contexts.appendChild(context);
+          tdContext.appendChild(contexts);
         }
-        tdContext.appendChild(contexts);
+        tr.appendChild(tdContext);
       }
-      tr.appendChild(tdContext);
 
       let tdNumber = document.createElement('td');
       tdNumber.setAttribute('class', 'ssResultNumber');
