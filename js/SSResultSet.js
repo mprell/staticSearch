@@ -367,10 +367,11 @@ class SSResultSet{
       let projectP = document.createElement('p');
       let projectClass = this.getProjectClass(project);
       projectP.setAttribute('class', 'button-tp' + (projectClass ? ' ' + projectClass : ''));
-      let projectSpan = document.createElement('span');
-      projectSpan.setAttribute('class', 'origin');
-      projectSpan.appendChild(document.createTextNode(project));
-      projectP.appendChild(projectSpan);
+      let projectA = document.createElement('a');
+	  projectA.setAttribute('class', 'origin');
+	  projectA.setAttribute('href', 'javascript:void(0)');
+	  projectA.appendChild(document.createTextNode(project));
+	  projectP.appendChild(projectA);
       tdProject.appendChild(projectP);
       tr.appendChild(tdProject);
 
