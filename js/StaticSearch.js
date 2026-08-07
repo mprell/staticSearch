@@ -508,6 +508,11 @@ class StaticSearch{
     //the hierarchy and open any closed details elements above them.
     let changedControls = [];
 
+    //A bookmarkable request to list the complete indexed collection.
+    if (searchParams.get('all') === '1'){
+      searchToDo = true;
+    }
+
     if (searchParams.has('q')){
       let currQ = searchParams.get('q').trim();
       if (currQ !== ''){
@@ -789,7 +794,10 @@ class StaticSearch{
           history.pushState({time: Date.now()}, '', url);
         }
         else{
-//If there are no search parameters, clear the URL.
+//An empty query with no active filters means: list all indexed documents.
+//Keep this state bookmarkable so that returning from an individual document
+//recreates the same complete result list.
+          url += '?all=1';
           history.pushState({time: Date.now()}, '', url);
         }
       }
@@ -1617,16 +1625,34 @@ if (this.discardedTerms.length > 0){
 //Easy ones first: #4
       if ((this.terms.length < 1)&&(this.docsMatchingFilters.size < 1)){
 
+        //No text query and no active filters: list the complete indexed
+        //collection. ssTitles contains one entry for every indexed document.
+        if (this.resultSet.titles !== null){
+          this.resultSet.addArray(Array.from(this.resultSet.titles.keys()));
+        }
+        this.resultSet.sortByScoreDesc();
+
         this.clearResultsDiv();
         if (pDiscarded !== null){
           this.resultsDiv.appendChild(pDiscarded);
         }
         let pFound = document.createElement('p');
-        pFound.append(this.captionSet.strDocumentsFound + '0');
+        pFound.append(this.captionSet.strDocumentsFound + this.resultSet.getSize());
         this.resultsDiv.appendChild(pFound);
+        if (this.resultSet.getSize() < 1){
+          this.reportNoResults(true);
+        } else if (this.resultSet.getSize() > this.resultsLimit){
+          this.reportTooManyResults();
+        } else {
+          this.resultsDiv.appendChild(this.resultSet.resultsAsHtml(this.captionSet.strScore));
+          if (this.resultsPerPage > 0 && this.resultsPerPage < this.resultSet.getSize()){
+            this.paginateResults();
+          }
+        }
         this.isSearching = false;
         this.searchFinishedHook(1);
-        return false;
+        window.dispatchEvent(new CustomEvent('ssSearchCompleted', {detail: {'hits': this.resultSet.getSize()}}));
+        return (this.resultSet.getSize() > 0);
       }
 //#3
       if ((this.terms.length < 1)&&(this.docsMatchingFilters.size > 0)){
