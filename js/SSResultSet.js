@@ -48,7 +48,10 @@ class SSResultSet{
       this.titles = null;
       //Current user-selected result-table sort. A second click on the same
       //column reverses the direction.
+      //Default result order: chronological ascending by docSortKey.
+      //The actual sort is applied once the result set has been populated.
       this.tableSort = {column: '', direction: 'asc'};
+      this.defaultSortPending = true;
       //Client-side pagination for the Goethe-Biographica result table.
       //The selected page size is remembered for the current browser tab.
       this.currentPage = 1;
@@ -78,6 +81,9 @@ class SSResultSet{
     try{
       this.mapDocs.clear();
       this.currentPage = 1;
+      //Every new search starts chronologically ascending by docSortKey.
+      this.tableSort = {column: '', direction: 'asc'};
+      this.defaultSortPending = true;
       return true;
     }
     catch(e){
@@ -628,6 +634,13 @@ class SSResultSet{
   * @return {Element} a table element ready for insertion into the host document.
   */
   resultsAsHtml(strScore){
+    //Apply the default ordering only once per result set. Because tableSort is
+    //still empty here, sortResultTable('date') selects ascending order.
+    if (this.defaultSortPending){
+      this.sortResultTable('date');
+      this.defaultSortPending = false;
+    }
+
     let root = document.createElement('div');
     root.setAttribute('class', 'ssResultSetPaged');
 
