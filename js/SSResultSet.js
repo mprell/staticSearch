@@ -49,6 +49,20 @@ class SSResultSet{
       //Current user-selected result-table sort. A second click on the same
       //column reverses the direction.
       this.tableSort = {column: '', direction: 'asc'};
+      //Client-side pagination for the Goethe-Biographica result table.
+      //The selected page size is remembered for the current browser tab.
+      this.currentPage = 1;
+      this.resultsPerPageOptions = [10, 25, 50, 100, 250, 500];
+      this.resultsPerPage = 50;
+      try{
+        let storedPageSize = parseInt(sessionStorage.getItem('gbResultsPerPage'), 10);
+        if (this.resultsPerPageOptions.indexOf(storedPageSize) >= 0){
+          this.resultsPerPage = storedPageSize;
+        }
+      }
+      catch(e){
+        //sessionStorage is optional; 50 results per page remains the default.
+      }
     }
     catch(e){
       console.log('ERROR: ' + e.message);
@@ -63,6 +77,7 @@ class SSResultSet{
   clear(){
     try{
       this.mapDocs.clear();
+      this.currentPage = 1;
       return true;
     }
     catch(e){
@@ -343,6 +358,7 @@ class SSResultSet{
       direction = (this.tableSort.direction === 'asc') ? 'desc' : 'asc';
     }
     this.tableSort = {column: column, direction: direction};
+    this.currentPage = 1;
 
     let collator = new Intl.Collator('de', {
       sensitivity: 'base',
@@ -477,6 +493,133 @@ class SSResultSet{
   }
 
 /**
+  * @function SSResultSet~getPageCount
+  * @description Returns the number of pages for the current result set.
+  */
+  getPageCount(){
+    return Math.max(1, Math.ceil(this.mapDocs.size / this.resultsPerPage));
+  }
+
+  /**
+   * @function SSResultSet~setResultsPerPage
+   * @description Changes the page size and returns to page one.
+   * @param {number} size Number of results to show per page.
+   */
+  setResultsPerPage(size){
+    let parsed = parseInt(size, 10);
+    if (this.resultsPerPageOptions.indexOf(parsed) < 0){return false;}
+    this.resultsPerPage = parsed;
+    this.currentPage = 1;
+    try{sessionStorage.setItem('gbResultsPerPage', String(parsed));}
+    catch(e){}
+    return true;
+  }
+
+  /**
+   * @function SSResultSet~buildPaginationControls
+   * @description Creates accessible pagination controls. The callback redraws
+   *              the result component after page or page-size changes.
+   * @param {Function} redraw Callback which redraws the result component.
+   * @param {boolean} includePageSize Whether to include the page-size selector.
+   * @return {Element} pagination control div.
+   */
+  buildPaginationControls(redraw, includePageSize){
+    let controls = document.createElement('div');
+    controls.setAttribute('class', 'ssResultPagination');
+
+    let total = this.mapDocs.size;
+    let pageCount = this.getPageCount();
+    if (this.currentPage > pageCount){this.currentPage = pageCount;}
+    if (this.currentPage < 1){this.currentPage = 1;}
+
+    if (includePageSize){
+      let sizeGroup = document.createElement('div');
+      sizeGroup.setAttribute('class', 'ssResultPageSize');
+      let label = document.createElement('label');
+      let selectId = 'ssResultsPerPage-' + Math.random().toString(36).slice(2);
+      label.setAttribute('for', selectId);
+      label.appendChild(document.createTextNode('Treffer pro Seite: '));
+      let select = document.createElement('select');
+      select.setAttribute('id', selectId);
+      select.setAttribute('class', 'ssResultsPerPage');
+      for (const optionValue of this.resultsPerPageOptions){
+        let option = document.createElement('option');
+        option.setAttribute('value', String(optionValue));
+        option.appendChild(document.createTextNode(String(optionValue)));
+        if (optionValue === this.resultsPerPage){option.selected = true;}
+        select.appendChild(option);
+      }
+      select.addEventListener('change', () => {
+        this.setResultsPerPage(select.value);
+        redraw();
+      });
+      label.appendChild(select);
+      sizeGroup.appendChild(label);
+      controls.appendChild(sizeGroup);
+    }
+
+    let start = total === 0 ? 0 : ((this.currentPage - 1) * this.resultsPerPage) + 1;
+    let end = Math.min(this.currentPage * this.resultsPerPage, total);
+    let summary = document.createElement('div');
+    summary.setAttribute('class', 'ssResultPageSummary');
+    summary.setAttribute('aria-live', 'polite');
+    summary.appendChild(document.createTextNode('Treffer ' + start + '–' + end + ' von ' + total));
+    controls.appendChild(summary);
+
+    if (pageCount > 1){
+      let nav = document.createElement('nav');
+      nav.setAttribute('class', 'ssResultPageNav');
+      nav.setAttribute('aria-label', 'Seitennavigation der Suchergebnisse');
+
+      let addButton = (text, page, label, disabled, current) => {
+        let button = document.createElement('button');
+        button.setAttribute('type', 'button');
+        button.setAttribute('class', 'ssResultPageButton' + (current ? ' current' : ''));
+        button.appendChild(document.createTextNode(text));
+        button.setAttribute('aria-label', label);
+        if (current){button.setAttribute('aria-current', 'page');}
+        if (disabled){button.disabled = true;}
+        else{
+          button.addEventListener('click', () => {
+            this.currentPage = page;
+            redraw();
+          });
+        }
+        nav.appendChild(button);
+      };
+
+      addButton('«', 1, 'Erste Seite', this.currentPage === 1, false);
+      addButton('‹', this.currentPage - 1, 'Vorherige Seite', this.currentPage === 1, false);
+
+      //Show a compact window of page numbers around the current page, while
+      //always including first and last page and marking omitted ranges.
+      let pages = new Set([1, pageCount]);
+      for (let p=Math.max(1, this.currentPage - 2); p<=Math.min(pageCount, this.currentPage + 2); p++){
+        pages.add(p);
+      }
+      let orderedPages = Array.from(pages).sort(function(a, b){return a - b;});
+      let previous = 0;
+      for (const page of orderedPages){
+        if (previous && page - previous > 1){
+          let ellipsis = document.createElement('span');
+          ellipsis.setAttribute('class', 'ssResultPageEllipsis');
+          ellipsis.setAttribute('aria-hidden', 'true');
+          ellipsis.appendChild(document.createTextNode('…'));
+          nav.appendChild(ellipsis);
+        }
+        addButton(String(page), page, 'Seite ' + page, false, page === this.currentPage);
+        previous = page;
+      }
+
+      addButton('›', this.currentPage + 1, 'Nächste Seite', this.currentPage === pageCount, false);
+      addButton('»', pageCount, 'Letzte Seite', this.currentPage === pageCount, false);
+      controls.appendChild(nav);
+    }
+
+    return controls;
+  }
+
+/**
   * @function SSResultSet~resultsAsHtml
   * @description Outputs the search results as a Goethe-Biographica-style table.
   *              Document metadata come from ssTitles JSON; KWIC contexts remain
@@ -485,11 +628,37 @@ class SSResultSet{
   * @return {Element} a table element ready for insertion into the host document.
   */
   resultsAsHtml(strScore){
+    let root = document.createElement('div');
+    root.setAttribute('class', 'ssResultSetPaged');
+
+    let redraw = () => {
+      let replacement = this.resultsAsHtml(strScore);
+      if (root.parentNode){root.parentNode.replaceChild(replacement, root);}
+    };
+
+    //Store the complete current result order, not only the visible page. This
+    //keeps previous/next navigation on individual documents aligned with the
+    //active table sort across page boundaries.
+    let allEntries = Array.from(this.mapDocs.entries());
+    let navigationDocs = allEntries.map(function(entry){
+      let value = entry[1];
+      return new URL(value.docUri, window.location.href).href;
+    });
+    try{
+      sessionStorage.setItem('gbSearchNavigation', JSON.stringify({
+        searchUrl: window.location.href,
+        docs: navigationDocs
+      }));
+    }
+    catch(e){}
+
+    root.appendChild(this.buildPaginationControls(redraw, true));
+
     let table = document.createElement('table');
     table.setAttribute('class', 'ssResultTable gbSearchResults');
 
-    // Show the search-context column only when the result set actually
-    // contains KWIC contexts (i.e. when a text query produced contexts).
+    // Show the search-context column only when the complete result set actually
+    // contains KWIC contexts (not merely the currently visible page).
     let showContexts = Array.from(this.mapDocs.values()).some(function(value){
       return value.contexts && value.contexts.length > 0;
     });
@@ -501,9 +670,7 @@ class SSResultSet{
       {label: 'Datierung', sort: 'date'},
       {label: '', sort: 'title'}
     ];
-    if (showContexts){
-      columns.push({label: 'Suchkontext', sort: ''});
-    }
+    if (showContexts){columns.push({label: 'Suchkontext', sort: ''});}
     columns.push(
       {label: 'Nummer', sort: 'number'},
       {label: 'Status', sort: 'status'}
@@ -530,19 +697,12 @@ class SSResultSet{
         if (this.tableSort.column === column.sort){
           indicator.appendChild(document.createTextNode(this.tableSort.direction === 'asc' ? ' ↑' : ' ↓'));
         }
-        else{
-          //Always show that this column can be sorted. The neutral double
-          //arrow does not imply an active sort direction.
-          indicator.appendChild(document.createTextNode(' ↕'));
-        }
+        else{indicator.appendChild(document.createTextNode(' ↕'));}
         th.appendChild(indicator);
 
         let activateSort = () => {
           this.sortResultTable(column.sort);
-          let replacement = this.resultsAsHtml(strScore);
-          if (table.parentNode){
-            table.parentNode.replaceChild(replacement, table);
-          }
+          redraw();
         };
         th.addEventListener('click', activateSort);
         th.addEventListener('keydown', function(evt){
@@ -552,35 +712,25 @@ class SSResultSet{
           }
         });
       }
-      else{
-        th.appendChild(document.createTextNode(column.label));
-      }
+      else{th.appendChild(document.createTextNode(column.label));}
       headRow.appendChild(th);
     }
     thead.appendChild(headRow);
     table.appendChild(thead);
 
     let tbody = document.createElement('tbody');
+    let pageCount = this.getPageCount();
+    if (this.currentPage > pageCount){this.currentPage = pageCount;}
+    let startIndex = (this.currentPage - 1) * this.resultsPerPage;
+    let endIndex = Math.min(startIndex + this.resultsPerPage, allEntries.length);
+    let pageEntries = allEntries.slice(startIndex, endIndex);
 
-    // Store the complete current result order and the originating search URL.
-    // The individual XHTML pages use this information for previous/next navigation.
-    let navigationDocs = Array.from(this.mapDocs.values()).map(function(value){
-      return new URL(value.docUri, window.location.href).href;
-    });
-    try{
-      sessionStorage.setItem('gbSearchNavigation', JSON.stringify({
-        searchUrl: window.location.href,
-        docs: navigationDocs
-      }));
-    }
-    catch(e){
-      // Navigation is optional; search results must still work if sessionStorage
-      // is unavailable (for example because of browser privacy settings).
-    }
-
-    let resultIndex = 0;
-    for (let [key, value] of this.mapDocs){
-      let currentResultIndex = resultIndex++;
+    for (let localIndex=0; localIndex<pageEntries.length; localIndex++){
+      let key = pageEntries[localIndex][0];
+      let value = pageEntries[localIndex][1];
+      //Use the index in the complete sorted result set, not the page-local
+      //index, so individual-document navigation works across page boundaries.
+      let currentResultIndex = startIndex + localIndex;
       let resultUrl = new URL(value.docUri, window.location.href);
       resultUrl.searchParams.set('gbResult', String(currentResultIndex));
 
@@ -694,13 +844,15 @@ class SSResultSet{
         tdStatus.appendChild(statusSpan);
       }
       tr.appendChild(tdStatus);
-
       tbody.appendChild(tr);
     }
 
     table.appendChild(tbody);
-    return table;
+    root.appendChild(table);
+    root.appendChild(this.buildPaginationControls(redraw, false));
+    return root;
   }
+
 
 /** @function SSResultSet~getTitleByDocId
   * @description this function returns the title of a document based on
