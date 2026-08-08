@@ -46,6 +46,9 @@ class SSResultSet{
       //A list of titles indexed by docUri is retrieved by AJAX
       //and set later.
       this.titles = null;
+      //Current user-selected result-table sort. A second click on the same
+      //column reverses the direction.
+      this.tableSort = {column: '', direction: 'asc'};
     }
     catch(e){
       console.log('ERROR: ' + e.message);
@@ -328,6 +331,152 @@ class SSResultSet{
   }
 
 /**
+  * @function SSResultSet~sortResultTable
+  * @description Sort the current result set according to a clickable table
+  *              column. Sorting the Map (rather than only DOM rows) keeps
+  *              previous/next result navigation in the same order as the table.
+  * @param {string} column project, date, title, number, or status.
+  */
+  sortResultTable(column){
+    let direction = 'asc';
+    if (this.tableSort.column === column){
+      direction = (this.tableSort.direction === 'asc') ? 'desc' : 'asc';
+    }
+    this.tableSort = {column: column, direction: direction};
+
+    let collator = new Intl.Collator('de', {
+      sensitivity: 'base',
+      ignorePunctuation: true
+    });
+    let entries = Array.from(this.mapDocs.entries());
+    let compare = (a, b) => {
+      let docA = a[1].docUri || a[0];
+      let docB = b[1].docUri || b[0];
+      let result = 0;
+
+      switch (column){
+        case 'project':
+          result = collator.compare(this.getProjectByDocId(docA), this.getProjectByDocId(docB));
+          break;
+        case 'date':
+          result = this.compareMachineDates(
+            this.getMachineDateByDocId(docA),
+            this.getMachineDateByDocId(docB)
+          );
+          break;
+        case 'title':
+          result = collator.compare(this.getTitleByDocId(docA), this.getTitleByDocId(docB));
+          break;
+        case 'number':
+          result = this.compareDocumentNumbers(
+            this.getNumberByDocId(docA),
+            this.getNumberByDocId(docB),
+            collator
+          );
+          break;
+        case 'status':
+          result = this.compareStatuses(
+            this.getStatusByDocId(docA),
+            this.getStatusByDocId(docB),
+            collator
+          );
+          break;
+      }
+
+      //Deterministic tie-breaker, independent of result score.
+      if (result === 0){
+        result = collator.compare(this.getTitleByDocId(docA), this.getTitleByDocId(docB));
+      }
+      if (result === 0){
+        result = collator.compare(docA, docB);
+      }
+      return (direction === 'asc') ? result : -result;
+    };
+
+    entries.sort(compare);
+    this.mapDocs = new Map(entries);
+  }
+
+  getAriaSort(column){
+    if (this.tableSort.column !== column){return 'none';}
+    return (this.tableSort.direction === 'asc') ? 'ascending' : 'descending';
+  }
+
+  compareMachineDates(a, b){
+    let normalize = function(value){
+      let s = String(value || '').trim();
+      if (s.length === 0){return {empty: true, parts: []};}
+      //Works for ISO-like machine-readable dates such as YYYY, YYYY-MM,
+      //YYYY-MM-DD and extended values because the numeric components are
+      //compared in sequence rather than as display text.
+      let parts = s.match(/-?\d+/g);
+      return {
+        empty: false,
+        parts: parts ? parts.map(function(n){return parseInt(n, 10);}) : [],
+        raw: s
+      };
+    };
+    let x = normalize(a);
+    let y = normalize(b);
+    if (x.empty && y.empty){return 0;}
+    if (x.empty){return 1;}
+    if (y.empty){return -1;}
+    let len = Math.max(x.parts.length, y.parts.length);
+    for (let i=0; i<len; i++){
+      let xv = (i < x.parts.length) ? x.parts[i] : 0;
+      let yv = (i < y.parts.length) ? y.parts[i] : 0;
+      if (xv !== yv){return xv - yv;}
+    }
+    return x.raw.localeCompare(y.raw);
+  }
+
+  compareDocumentNumbers(a, b, collator){
+    let parse = function(value){
+      let s = String(value || '').trim();
+      //Primary order: alphabetic part. Secondary order: all numeric parts
+      //in their occurrence order, e.g. RA 2, Nr. 9 before RA 2, Nr. 10.
+      let alpha = s.replace(/\d+/g, ' ').replace(/[^A-Za-zÀ-ÖØ-öø-ÿÄÖÜäöüß]+/g, ' ').trim();
+      let nums = (s.match(/\d+/g) || []).map(function(n){return parseInt(n, 10);});
+      return {raw: s, alpha: alpha, nums: nums};
+    };
+    let x = parse(a);
+    let y = parse(b);
+    let c = collator.compare(x.alpha, y.alpha);
+    if (c !== 0){return c;}
+    let len = Math.max(x.nums.length, y.nums.length);
+    for (let i=0; i<len; i++){
+      if (i >= x.nums.length){return -1;}
+      if (i >= y.nums.length){return 1;}
+      if (x.nums[i] !== y.nums[i]){return x.nums[i] - y.nums[i];}
+    }
+    return collator.compare(x.raw, y.raw);
+  }
+
+  compareStatuses(a, b, collator){
+    let normalize = function(value){
+      let statuses = String(value || '').split('|')
+        .map(function(s){return s.trim();})
+        .filter(function(s){return s.length > 0;});
+      //Count different statuses, not duplicate occurrences.
+      let unique = [];
+      let seen = new Set();
+      for (const status of statuses){
+        let key = status.toLocaleLowerCase('de');
+        if (!seen.has(key)){
+          seen.add(key);
+          unique.push(status);
+        }
+      }
+      unique.sort(function(x, y){return collator.compare(x, y);});
+      return {count: unique.length, alpha: unique.join('|')};
+    };
+    let x = normalize(a);
+    let y = normalize(b);
+    if (x.count !== y.count){return x.count - y.count;}
+    return collator.compare(x.alpha, y.alpha);
+  }
+
+/**
   * @function SSResultSet~resultsAsHtml
   * @description Outputs the search results as a Goethe-Biographica-style table.
   *              Document metadata come from ssTitles JSON; KWIC contexts remain
@@ -347,14 +496,65 @@ class SSResultSet{
 
     let thead = document.createElement('thead');
     let headRow = document.createElement('tr');
-    let labels = ['Projekt', 'Datierung', ''];
+    let columns = [
+      {label: 'Projekt', sort: 'project'},
+      {label: 'Datierung', sort: 'date'},
+      {label: '', sort: 'title'}
+    ];
     if (showContexts){
-      labels.push('Suchkontext');
+      columns.push({label: 'Suchkontext', sort: ''});
     }
-    labels.push('Nummer', 'Status');
-    for (const label of labels){
+    columns.push(
+      {label: 'Nummer', sort: 'number'},
+      {label: 'Status', sort: 'status'}
+    );
+
+    for (const column of columns){
       let th = document.createElement('th');
-      th.appendChild(document.createTextNode(label));
+      if (column.sort){
+        th.setAttribute('class', 'ssSortable');
+        th.setAttribute('tabindex', '0');
+        th.setAttribute('role', 'button');
+        th.setAttribute('data-sort', column.sort);
+        th.setAttribute('aria-sort', this.getAriaSort(column.sort));
+        th.setAttribute('title', 'Nach dieser Spalte sortieren');
+
+        let label = document.createElement('span');
+        label.setAttribute('class', 'ssSortLabel');
+        label.appendChild(document.createTextNode(column.label));
+        th.appendChild(label);
+
+        let indicator = document.createElement('span');
+        indicator.setAttribute('class', 'ssSortIndicator');
+        indicator.setAttribute('aria-hidden', 'true');
+        if (this.tableSort.column === column.sort){
+          indicator.appendChild(document.createTextNode(this.tableSort.direction === 'asc' ? ' ↑' : ' ↓'));
+        }
+        else{
+          //Always show that this column can be sorted. The neutral double
+          //arrow does not imply an active sort direction.
+          indicator.appendChild(document.createTextNode(' ↕'));
+        }
+        th.appendChild(indicator);
+
+        let activateSort = () => {
+          this.sortResultTable(column.sort);
+          let replacement = this.resultsAsHtml(strScore);
+          if (table.parentNode){
+            table.parentNode.replaceChild(replacement, table);
+          }
+        };
+        th.addEventListener('click', activateSort);
+        th.addEventListener('keydown', function(evt){
+          if ((evt.key === 'Enter') || (evt.key === ' ')){
+            evt.preventDefault();
+            activateSort();
+          }
+        });
+      }
+      else{
+        th.appendChild(document.createTextNode(column.label));
+      }
       headRow.appendChild(th);
     }
     thead.appendChild(headRow);
@@ -563,6 +763,18 @@ class SSResultSet{
   /** Goethe-Biographica-specific metadata appended to ssTitles JSON. */
   getProjectByDocId(docId){
     try{return (this.titles.get(docId).length > 3)? this.titles.get(docId)[3] : '';}
+    catch(e){return '';}
+  }
+
+  getMachineDateByDocId(docId){
+    try{
+      let titleData = this.titles.get(docId);
+      //If json.xsl appends the machine-readable <meta name="Datum"> as
+      //an eighth value, use it directly. For the current Goethe-Biographica
+      //ssTitles layout, docSortKey at index 2 is the machine-readable date
+      //and is therefore the backwards-compatible fallback.
+      return (titleData.length > 7 && titleData[7]) ? titleData[7] : ((titleData.length > 2) ? titleData[2] : '');
+    }
     catch(e){return '';}
   }
 
