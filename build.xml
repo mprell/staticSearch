@@ -394,19 +394,23 @@ create a new file? (o=overwrite, n=new)"
 
   <target name="json">
     <description>
-      TARGET: json
-      This target creates the individual token JSON files from the
-      tokenized XHTML files created by the above tokenize task. It is run on itself and uses the
-      information in the configuration XSLT module (generated in the config task) to determine input
-      files, et cetera. Note that this task will likely create *a lot* of files and may take some
-      time, depending on the size of the resource collection. </description>
+        TARGET: json
+        This target creates the individual token JSON files from the
+        tokenized XHTML files created by the above tokenize task.
+    </description>
+
     <echo message="Creating individual JSON files..."/>
-    <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
-      <arg value="-xsl:${ssBaseDir.converted}/xsl/json.xsl"/>
-      <arg value="-s:${ssBaseDir.converted}/xsl/json.xsl"/>
-      <arg value="--suppressXsltNamespaceCheck:on"/>
-    </java>
-  </target>
+
+    <java classpath="${ssSaxon}"
+      classname="net.sf.saxon.Transform"
+      failonerror="true"
+      fork="${javaFork}">
+
+    <arg value="-xsl:${ssBaseDir.converted}/xsl/json.xsl"/>
+    <arg value="-s:${ssBaseDir.converted}/xsl/json.xsl"/>
+    <arg value="--suppressXsltNamespaceCheck:on"/>
+</java>
+</target>
 
   <target name="makeSearchPage">
     <description>
