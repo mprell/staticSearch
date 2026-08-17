@@ -696,7 +696,7 @@ create a new file? (o=overwrite, n=new)"
   </target>
 
   <target name="all"
-    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, report, clean">
+    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, report">
     <description>
       TARGET: all
       Default target for running the entire static search creation process.
