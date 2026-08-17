@@ -392,6 +392,75 @@ create a new file? (o=overwrite, n=new)"
     </delete>
   </target>
 
+  <target name="tokenizeIncremental">
+    <description>
+        Tokenize only source XHTML files which are newer than
+        their corresponding cached tokenized files.
+    </description>
+
+    <echo message="Creating changed tokenized XHTML files..."/>
+
+    <loadfile srcFile="${ssPatternsetFile}"
+              property="ptn.incremental"
+              failonerror="true"/>
+
+    <xslt
+        style="${ssBaseDir.converted}/xsl/tokenize.xsl"
+        classpath="${ssSaxon}"
+        destdir="${staticSearchTempDir}"
+        reloadstylesheet="true"
+        force="true"
+        useimplicitfileset="false">
+
+        <factory name="net.sf.saxon.TransformerFactoryImpl"/>
+
+        <fileset id="siteFilesIncremental"
+                 dir="${ssCollectionDirName.converted}"
+                 casesensitive="no">
+
+            <includesfile name="${ssPatternsetFile}"/>
+
+            <exclude name="**/${staticSearchTempFolder}/**"/>
+
+            <depend targetdir="${staticSearchTempDir}">
+                <mapper type="regexp"
+                        from="^(.*)\.([^\.]+)$"
+                        to="\1_tokenized.html"/>
+            </depend>
+
+        </fileset>
+
+        <regexpmapper
+            from="^(.*)\.([^\.]+$)"
+            to="\1_tokenized.html"/>
+
+    </xslt>
+
+    <delete verbose="${ssVerbose}">
+        <fileset dir="${staticSearchTempDir}">
+            <size value="0"/>
+        </fileset>
+    </delete>
+</target>
+
+  <target name="resetIndex">
+    <description>
+      TARGET: resetIndex
+      Deletes derived search-index files while preserving the cached tokenized XHTML files.
+    </description>
+    <echo message="Deleting derived JSON index while keeping token cache..."/>
+    <delete dir="${staticSearchDir}/stems"/>
+    <delete dir="${staticSearchDir}/filters"/>
+    <delete>
+      <fileset dir="${staticSearchDir}">
+        <include name="ssTitles*.json"/>
+        <include name="ssStopwords*.json"/>
+        <include name="ssWordString*.txt"/>
+        <include name="config*.json"/>
+      </fileset>
+    </delete>
+  </target>
+
   <target name="json">
     <description>
         TARGET: json
@@ -657,6 +726,24 @@ create a new file? (o=overwrite, n=new)"
     <description>
       TARGET: basic
       Target that runs the whole process other than the report creation.
+    </description>
+  </target>
+
+  <target name="allCached"
+    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, report">
+    <description>
+      TARGET: allCached
+      Full staticSearch build that retains the token cache for later incremental builds.
+    </description>
+  </target>
+
+  <target name="incremental"
+    depends="validate.config, config, tokenizeIncremental, resetIndex, json, buildJS, copyFiles, makeSearchPage, report">
+    <description>
+      TARGET: incremental
+      Incremental staticSearch build: re-tokenizes only changed source files, rebuilds the
+      derived JSON index from the complete token cache, and keeps the cache for the next run.
+      Deleted source files are not removed from the token cache by this target.
     </description>
   </target>
 
