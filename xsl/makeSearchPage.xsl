@@ -397,7 +397,7 @@
                     </xsl:if>-->
                     <div class="ssDescFilters">
                         <fieldset class="ssFieldset" title="project" id="ssDesc1" style="margin-top: 10px;">
-                           <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 10px auto 0;">
+                           <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 0 auto 0;">
                            
                                <span class="subproject-container-checkbox-and-label">
                                    <input type="checkbox" title="project" value="Tagebücher" id="ssDesc1_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_4">Tagebücher</label></span>
@@ -461,7 +461,7 @@
                             </fieldset>
                         </div>
                         <fieldset class="ssFieldset" title="status" id="ssDesc2">
-                           <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 10px auto 0;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Digitalisate" id="ssDesc2_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_1">Digitalisate</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Regest" id="ssDesc2_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_2">Regest</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Transkription" id="ssDesc2_3" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_3">Transkription</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="XML/TEI" id="ssDesc2_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_4">XML/TEI</label></span></div>
+                           <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 0px auto 0;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Digitalisate" id="ssDesc2_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_1">Digitalisate</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Regest" id="ssDesc2_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_2">Regest</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Transkription" id="ssDesc2_3" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_3">Transkription</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="XML/TEI" id="ssDesc2_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_4">XML/TEI</label></span></div>
                         </fieldset>
                </div>
  
