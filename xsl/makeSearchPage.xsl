@@ -255,8 +255,11 @@
                          browser behaviour is too variable. -->
                     <!--<xsl:variable name="validationPattern" as="xs:string">\s*(.*([^\*\?\[\]\s]+[^\s]*){3})+\s*</xsl:variable>
                     <input type="text" id="ssQuery" pattern="{$validationPattern}"/>-->
-                    <input type="text" id="ssQuery" aria-label="{hcmc:getCaption('ssDoSearch', $captionLang)}"/>
-                    <button id="ssDoSearch"><xsl:sequence select="hcmc:getCaption('ssDoSearch', $captionLang)"/></button>
+                    <input type="text" id="ssQuery" class="text" placeholder="Suche, z.B.: Triumph, Jubel, Serenissimus ..." aria-label="{hcmc:getCaption('ssDoSearch', $captionLang)}"/>
+                    <button id="ssDoSearch" type="submit" value=" "><!--<xsl:sequence select="hcmc:getCaption('ssDoSearch', $captionLang)"/>--></button>
+                    
+                    
+                    
                 </span>
                 
                 <xsl:if test="not(empty($filterJSONURIs)) or not(empty($ssContextMap))">
@@ -267,11 +270,27 @@
                     <xsl:variable name="numFilters" select="$filterJSONURIs[matches(.,'ssNum\d+.*\.json')]"/>
                     
                     <!--If there are filters, then add a clear button-->
-                    <span class="clearButton">
-                        <button id="ssClear">
-                            <xsl:sequence select="hcmc:getCaption('ssClear', $captionLang)"/>
+  
+                    <div class="clearButton" style="display: flex; justify-content: center; font-size: small;"> 
+                        <button id="ssClear" style="all: unset; cursor: pointer; margin-right: 10px;">
+                            <xsl:text>Neue Suche</xsl:text>
                         </button>
-                    </span>
+                        <script>
+					// this function gets called by Hilfe onclick
+					function toggleSearchinfoText() {
+						// this.classList.toggle('active');
+						document.querySelector('#searchinfo').innerHTML += "<span id='searchinfo-text'>Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href='/projekt/how-to-use-api.html'>Hinweise zur Benutzung</a>.</span>";
+						document.querySelector('#searchinfo-text').classList.toggle('visible');
+					}
+				</script>
+
+				<div onclick="toggleSearchinfoText();" onmouseover="this.style.textDecoration='none';" onmouseout="this.style.textDecoration='none';" style="margin-right: 10px; cursor: pointer; text-decoration: none;" title="Hilfe anzeigen">
+					Hilfe
+
+					<span id="searchinfo"><span id="searchinfo-text" class="">Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>.</span><span id="searchinfo-text">Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>.</span><span id="searchinfo-text">Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>.</span></span>
+				</div>
+                    </div>
+                        
                     
                     <!--Add the "search in" control, which isn't a document filter
                         in the same way-->
@@ -305,75 +324,14 @@
                     
                     <!--Now handle all of the actual document filters-->
                     <!--First, handle the desc filters-->
-                    <xsl:if test="not(empty($descFilters))">
-                        <div class="ssDescFilters">
-                            <!-- We stash these in a variable so we can output them 
-                                      sorted alphabetically based on their names, which we
-                                      don't know until they're created. -->
-                            <xsl:variable name="fieldsets" as="element(fieldset)*">
-                                <xsl:for-each select="$descFilters">
-                                    
-                                    <!--Get the document-->
-                                    <xsl:variable name="jsonDoc" select="unparsed-text(.) => json-to-xml()" as="document-node()"/>
-                                    
-                                    <!--And its name and id -->
-                                    <xsl:variable name="filterName" select="$jsonDoc//j:string[@key='filterName']"/>
-                                    <xsl:variable name="filterId" select="$jsonDoc//j:string[@key='filterId']"/>
-                                    
-                                    <!--And now create the fieldset and legend-->
-                                    <fieldset class="ssFieldset" title="{$filterName}" id="{$filterId}">
-                                        <legend>
-                                            <xsl:sequence select="hcmc:getFilterLabel($filterName, $filterId, false())"/>
-                                        </legend>
-                                        
-                                        <!--And create a ul from each of the embedded maps-->
-                                        <ul class="ssDescCheckboxList">
-                                            <!-- Before sorting checkbox items, we need to know
-                                              whether they're numeric or not. -->
-                                            <xsl:variable name="notNumeric" select="some $n in (for $s in $jsonDoc//j:map[@key]/j:string[@key='sortKey'] return $s castable as xs:decimal) satisfies $n = false()"/>
-                                            <xsl:variable name="sortedMaps" as="element(j:map)+">
-                                                <xsl:choose>
-                                                    <xsl:when test="$notNumeric">
-                                                        <xsl:for-each select="$jsonDoc//j:map[@key]">
-                                                          <!-- Note: the article-stripping here is crude and limited to a couple of languages. For anything important, users should provide a sort key. -->
-                                                            <xsl:sort select="replace(j:string[@key='sortKey'], '^((the)|(a)|(an)|(l[ea]s?)|(de[nrs]?)|([ie]l)|(un[oe]?))\s+', '', 'i')" lang="{$pageLang}"/>
-                                                            <xsl:sequence select="."/>
-                                                        </xsl:for-each>
-                                                    </xsl:when>
-                                                    <xsl:otherwise>
-                                                        <xsl:for-each select="$jsonDoc//j:map[@key]">
-                                                            <xsl:sort select="j:string[@key='sortKey']" data-type="number"/>
-                                                            <xsl:sequence select="."/>
-                                                        </xsl:for-each>
-                                                    </xsl:otherwise>
-                                                </xsl:choose>
-                                            </xsl:variable>
-                                            
-                                            <xsl:for-each select="$sortedMaps">
-                                                <!--<xsl:sort select="if ($notNumeric)  then replace(j:string[@key='name'], '^((the)|(a)|(an))\s+', '', 'i') else xs:decimal(j:string[@key='name'])"/>-->
-                                                <!--And create the input item: the input item contains:
-                                            * an @title that specifies the filter name (e.g. Genre)
-                                            * an @value that specifies the filter value (e.g. Poem)
-                                            * an @id to associate the label for A11Y-->
-                                                <xsl:variable name="thisOptId" select="@key"/>
-                                                <xsl:variable name="thisOptName" select="j:string[@key='name']"/>
-                                                <li>
-                                                    <!--REMOVE staticSearch.desc after deprecation period?-->
-                                                    <input type="checkbox" title="{$filterName}" value="{$thisOptName}" id="{$thisOptId}"
-                                                        class="staticSearch.desc staticSearch_desc"/>
-                                                    <label for="{$thisOptId}"><xsl:value-of select="$thisOptName"/></label>
-                                                </li>
-                                            </xsl:for-each>
-                                        </ul>
-                                    </fieldset>
-                                </xsl:for-each>
-                            </xsl:variable>
-                            <xsl:for-each select="$fieldsets">
-                                <xsl:sort select="normalize-space(lower-case(legend))" lang="{$pageLang}"/>
-                                <xsl:sequence select="."/>
-                            </xsl:for-each>
-                        </div>
-                    </xsl:if>
+                    <div class="ssDescFilters">
+                  <fieldset class="ssFieldset" title="Projekt" id="ssDesc1">
+                     <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Projekt" value="Briefe an Goethe" id="ssDesc1_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_1">Briefe an Goethe</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Projekt" value="Briefe von Goethe" id="ssDesc1_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_2">Briefe von Goethe</label></span></div>
+                  </fieldset>
+                  <fieldset class="ssFieldset" title="Status" id="ssDesc2">
+                     <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Digitalisate" id="ssDesc2_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_1">Digitalisate</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Regest" id="ssDesc2_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_2">Regest</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Transkription" id="ssDesc2_3" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_3">Transkription</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="XML/TEI" id="ssDesc2_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_4">XML/TEI</label></span></div>
+                  </fieldset>
+               </div>
                   
                   <!-- Now create feature filters. -->
                   <xsl:if test="not(empty($featFilters))">
