@@ -1204,8 +1204,8 @@
                             <xsl:sequence select="hcmc:getDocSortKey(.)"/>
                             <!-- Goethe Biographica result-table metadata. Positions
                                  0-2 remain unchanged for staticSearch compatibility. -->
-                            <string><xsl:value-of select="string((.//meta[@name='Projekt']/@content)[1])"/></string>
-                            <string><xsl:value-of select="string((.//meta[@name='date']/@content)[1])"/></string>
+                            <string><xsl:value-of select="string((.//meta[@name='project']/@content)[1])"/></string>
+                            <string><xsl:value-of select="string((.//meta[@name='place-date']/@content)[1])"/></string>
                             <string><xsl:value-of select="string((.//meta[@name='number']/@content)[1])"/></string>
                             <string><xsl:value-of select="string-join(.//meta[@name='status']/@content ! normalize-space(.), '|')"/></string>
                         </array>

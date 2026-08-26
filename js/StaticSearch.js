@@ -1623,7 +1623,7 @@ if (this.discardedTerms.length > 0){
 }
 
 //Easy ones first: #4
-      if ((this.terms.length < 1)&&(this.docsMatchingFilters.size < 1)){
+      if ((this.terms.length < 1)&&(this.docsMatchingFilters.filtersActive !== true)){
 
         //No text query and no active filters: list the complete indexed
         //collection. ssTitles contains one entry for every indexed document.
@@ -1655,7 +1655,7 @@ if (this.discardedTerms.length > 0){
         return (this.resultSet.getSize() > 0);
       }
 //#3
-      if ((this.terms.length < 1)&&(this.docsMatchingFilters.size > 0)){
+      if ((this.terms.length < 1)&&(this.docsMatchingFilters.filtersActive === true)){
         this.resultSet.addArray([...this.docsMatchingFilters]);
         this.resultSet.sortByScoreDesc();
 
