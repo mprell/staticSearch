@@ -324,72 +324,117 @@
                     
                     <!--Now handle all of the actual document filters-->
                     <!--First, handle the desc filters-->
-                    <div class="ssDescFilters">
-                  <fieldset class="ssFieldset" title="Projekt" id="ssDesc1">
-                     <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Projekt" value="Briefe an Goethe" id="ssDesc1_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_1">Briefe an Goethe</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Projekt" value="Briefe von Goethe" id="ssDesc1_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_2">Briefe von Goethe</label></span></div>
-                  </fieldset>
-                  <fieldset class="ssFieldset" title="Status" id="ssDesc2">
-                     <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Digitalisate" id="ssDesc2_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_1">Digitalisate</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Regest" id="ssDesc2_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_2">Regest</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Transkription" id="ssDesc2_3" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_3">Transkription</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="XML/TEI" id="ssDesc2_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_4">XML/TEI</label></span></div>
-                  </fieldset>
-               </div>
-                  
-                  <!-- Now create feature filters. -->
-                  <xsl:if test="not(empty($featFilters))">
-                    <div class="ssFeatFilters">
-                      <!-- We stash these in a variable so we can output them 
-                                      sorted alphabetically based on their names, which we
-                                      don't know until they're created. -->
-                      <xsl:variable name="fieldsets" as="element(fieldset)*">
-                        <xsl:for-each select="$featFilters">
-                          
-                          <!--Get the document-->
-                          <xsl:variable name="jsonDoc" select="unparsed-text(.) => json-to-xml()" as="document-node()"/>
-                          
-                          <!--And its name and id -->
-                          <xsl:variable name="filterName" select="$jsonDoc//j:string[@key='filterName']"/>
-                          <xsl:variable name="filterId" select="$jsonDoc//j:string[@key='filterId']"/>
-                          
-                          <!--And now create the fieldset and legend-->
-                          <fieldset class="ssFieldset" title="{$filterName}" id="{$filterId}">
-                            <legend><xsl:sequence select="hcmc:getFilterLabel($filterName, $filterId, false())"/></legend>
-                            
-                            <!--And create a simple text box for the feature.-->
-                            <input type="text" title="{$filterName}" placeholder="{hcmc:getCaption('ssStartTyping', $captionLang)}"
-                              class="staticSearch.feat staticSearch_feat"/>
-                            
-                          </fieldset>
-                        </xsl:for-each>
-                      </xsl:variable>
-                      <xsl:for-each select="$fieldsets">
-                        <xsl:sort select="normalize-space(lower-case(legend))" lang="{$pageLang}"/>
-                        <xsl:sequence select="."/>
-                      </xsl:for-each>
-                    </div>
-                  </xsl:if>
-                  
-                    <!--Now create date boxes, if necessary-->
                     
-                    <xsl:if test="not(empty($dateFilters))">
-                        <div class="ssDateFilters">
-                            <!-- We stash these in a variable so we can output them 
+                    
+                    <!--<xsl:if test="not(empty($descFilters))">
+                        <div class="ssDescFilters">
+                            <!-\- We stash these in a variable so we can output them 
                                       sorted alphabetically based on their names, which we
-                                      don't know until they're created. -->
+                                      don't know until they're created. -\->
+                            <xsl:variable name="fieldsets" as="element(fieldset)*">
+                                <xsl:for-each select="$descFilters">
+                                    
+                                    <!-\-Get the document-\->
+                                    <xsl:variable name="jsonDoc" select="unparsed-text(.) => json-to-xml()" as="document-node()"/>
+                                    
+                                    <!-\-And its name and id -\->
+                                    <xsl:variable name="filterName" select="$jsonDoc//j:string[@key='filterName']"/>
+                                    <xsl:variable name="filterId" select="$jsonDoc//j:string[@key='filterId']"/>
+                                    
+                                    <!-\-And now create the fieldset and legend-\->
+                                    <fieldset class="ssFieldset" title="{$filterName}" id="{$filterId}">
+                                        <legend>
+                                            <xsl:sequence select="hcmc:getFilterLabel($filterName, $filterId, false())"/>
+                                        </legend>
+                                        
+                                        <!-\-And create a ul from each of the embedded maps-\->
+                                        <ul class="ssDescCheckboxList">
+                                            <!-\- Before sorting checkbox items, we need to know
+                                              whether they're numeric or not. -\->
+                                            <xsl:variable name="notNumeric" select="some $n in (for $s in $jsonDoc//j:map[@key]/j:string[@key='sortKey'] return $s castable as xs:decimal) satisfies $n = false()"/>
+                                            <xsl:variable name="sortedMaps" as="element(j:map)+">
+                                                <xsl:choose>
+                                                    <xsl:when test="$notNumeric">
+                                                        <xsl:for-each select="$jsonDoc//j:map[@key]">
+                                                          <!-\- Note: the article-stripping here is crude and limited to a couple of languages. For anything important, users should provide a sort key. -\->
+                                                            <xsl:sort select="replace(j:string[@key='sortKey'], '^((the)|(a)|(an)|(l[ea]s?)|(de[nrs]?)|([ie]l)|(un[oe]?))\s+', '', 'i')" lang="{$pageLang}"/>
+                                                            <xsl:sequence select="."/>
+                                                        </xsl:for-each>
+                                                    </xsl:when>
+                                                    <xsl:otherwise>
+                                                        <xsl:for-each select="$jsonDoc//j:map[@key]">
+                                                            <xsl:sort select="j:string[@key='sortKey']" data-type="number"/>
+                                                            <xsl:sequence select="."/>
+                                                        </xsl:for-each>
+                                                    </xsl:otherwise>
+                                                </xsl:choose>
+                                            </xsl:variable>
+                                            
+                                            <xsl:for-each select="$sortedMaps">
+                                                <!-\-<xsl:sort select="if ($notNumeric)  then replace(j:string[@key='name'], '^((the)|(a)|(an))\s+', '', 'i') else xs:decimal(j:string[@key='name'])"/>-\->
+                                                <!-\-And create the input item: the input item contains:
+                                            * an @title that specifies the filter name (e.g. Genre)
+                                            * an @value that specifies the filter value (e.g. Poem)
+                                            * an @id to associate the label for A11Y-\->
+                                                <xsl:variable name="thisOptId" select="@key"/>
+                                                <xsl:variable name="thisOptName" select="j:string[@key='name']"/>
+                                                <li>
+                                                    <!-\-REMOVE staticSearch.desc after deprecation period?-\->
+                                                    <input type="checkbox" title="{$filterName}" value="{$thisOptName}" id="{$thisOptId}"
+                                                        class="staticSearch.desc staticSearch_desc"/>
+                                                    <label for="{$thisOptId}"><xsl:value-of select="$thisOptName"/></label>
+                                                </li>
+                                            </xsl:for-each>
+                                        </ul>
+                                    </fieldset>
+                                </xsl:for-each>
+                            </xsl:variable>
+                            <xsl:for-each select="$fieldsets">
+                                <xsl:sort select="normalize-space(lower-case(legend))" lang="{$pageLang}"/>
+                                <xsl:sequence select="."/>
+                            </xsl:for-each>
+                        </div>
+                    </xsl:if>-->
+                    <div class="ssDescFilters">
+                        <fieldset class="ssFieldset" title="project" id="ssDesc1" style="margin-top: 10px;">
+                           <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 10px auto 0;">
+                           
+                               <span class="subproject-container-checkbox-and-label">
+                                   <input type="checkbox" title="project" value="Tagebücher" id="ssDesc1_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_4">Tagebücher</label></span>
+                               <span class="subproject-container-checkbox-and-label">
+                                   <input type="checkbox" title="project" value="Briefe von Goethe" id="ssDesc1_3" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_3">Briefe von Goethe</label>
+                               </span>
+                               <span class="subproject-container-checkbox-and-label">
+                                   <input type="checkbox" title="project" value="Briefe an Goethe" id="ssDesc1_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_2">Briefe an Goethe</label></span>
+                               <span class="subproject-container-checkbox-and-label">
+                                   <input type="checkbox" title="project" value="Begegnungen &amp; Gespräche" id="ssDesc1_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc1_1">Begegnungen &amp; Gespräche</label></span>
+                           </div>
+                        </fieldset>
+                        
+                        
+                        <!--Now create date boxes, if necessary-->
+                    
+                    <!--<xsl:if test="not(empty($dateFilters))">
+                        <div class="ssDateFilters">
+                            <!-\- We stash these in a variable so we can output them 
+                                      sorted alphabetically based on their names, which we
+                                      don't know until they're created. -\->
                             <xsl:variable name="fieldsets" as="element(fieldset)*">
                                 <xsl:for-each select="$dateFilters">
                                     <xsl:variable name="jsonDoc" select="unparsed-text(.) => json-to-xml()" as="document-node()"/>
                                     <xsl:variable name="filterName" select="$jsonDoc//j:string[@key='filterName']"/>
                                     <xsl:variable name="filterId" select="$jsonDoc//j:string[@key='filterId']"/>
                                     
-                                    <!--Get the minimum from the date regex-->
+                                    <!-\-Get the minimum from the date regex-\->
                                     <xsl:variable name="minDate" as="xs:date" 
                                         select="min((for $d in $jsonDoc//j:string[1][matches(., $dateRegex)] return hcmc:normalizeDateString($d, true())))"/>
                                     
-                                    <!--And the maximum date-->
+                                    <!-\-And the maximum date-\->
                                     <xsl:variable name="maxDate" as="xs:date" 
                                         select="max((for $d in $jsonDoc//j:string[1][matches(., $dateRegex)] return hcmc:normalizeDateString($d, false())))"/>
                                     
                                     <fieldset class="ssFieldset" title="{$filterName}" id="{$filterId}">
-                                        <!--And add the filter name as the legend-->
+                                        <!-\-And add the filter name as the legend-\->
                                         <legend><xsl:sequence select="hcmc:getFilterLabel($filterName, $filterId, false())"/></legend>
                                         <span>
                                             <label for="{$filterId}_from">From: </label>
@@ -408,7 +453,61 @@
                                 <xsl:sequence select="."/>
                             </xsl:for-each>
                         </div>
-                    </xsl:if>
+                    </xsl:if>-->
+                        <div class="ssDateFilters">
+                            <fieldset class="ssFieldset" title="date-iso" id="ssDate1">
+                                <span><label for="ssDate1_from">Datum von: </label><input type="text" maxlength="10" pattern="^\d\d\d\d(-((((01)|(03)|(05)|(07)|(08)|(10)|(12))-((0[1-9])|([12][0-9])|(3[01])))|(((04)|(06)|(09)|(11))-((0[1-9])|([12][0-9])|(30)))|(02-((0[1-9])|([12][0-9]))))|(-((0[123456789])|(1[012]))))?$" title="date-iso" id="ssDate1_from" class="staticSearch.date staticSearch_date" placeholder="1762-01-25" onchange="this.reportValidity()"/></span>
+                                <span><label for="ssDate1_to">bis: </label><input type="text" maxlength="10" pattern="^\d\d\d\d(-((((01)|(03)|(05)|(07)|(08)|(10)|(12))-((0[1-9])|([12][0-9])|(3[01])))|(((04)|(06)|(09)|(11))-((0[1-9])|([12][0-9])|(30)))|(02-((0[1-9])|([12][0-9]))))|(-((0[123456789])|(1[012]))))?$" title="date-iso" id="ssDate1_to" class="staticSearch.date staticSearch_date" placeholder="1824-12-30" onchange="this.reportValidity()"/></span>
+                            </fieldset>
+                        </div>
+                        <fieldset class="ssFieldset" title="status" id="ssDesc2">
+                           <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 10px auto 0;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Digitalisate" id="ssDesc2_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_1">Digitalisate</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Regest" id="ssDesc2_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_2">Regest</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Transkription" id="ssDesc2_3" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_3">Transkription</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="XML/TEI" id="ssDesc2_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_4">XML/TEI</label></span></div>
+                        </fieldset>
+               </div>
+ 
+                  <!-- Now create feature filters. -->
+                  <!--<xsl:if test="not(empty($featFilters))">
+                    <div class="ssFeatFilters">
+                      <!-\- We stash these in a variable so we can output them 
+                                      sorted alphabetically based on their names, which we
+                                      don't know until they're created. -\->
+                      <xsl:variable name="fieldsets" as="element(fieldset)*">
+                        <xsl:for-each select="$featFilters">
+                          
+                          <!-\-Get the document-\->
+                          <xsl:variable name="jsonDoc" select="unparsed-text(.) => json-to-xml()" as="document-node()"/>
+                          
+                          <!-\-And its name and id -\->
+                          <xsl:variable name="filterName" select="$jsonDoc//j:string[@key='filterName']"/>
+                          <xsl:variable name="filterId" select="$jsonDoc//j:string[@key='filterId']"/>
+                          
+                          <!-\-And now create the fieldset and legend-\->
+                          <fieldset class="ssFieldset" title="{$filterName}" id="{$filterId}">
+                            <legend><xsl:sequence select="hcmc:getFilterLabel($filterName, $filterId, false())"/></legend>
+                            
+                            <!-\-And create a simple text box for the feature.-\->
+                            <input type="text" title="{$filterName}" placeholder="{hcmc:getCaption('ssStartTyping', $captionLang)}"
+                              class="staticSearch.feat staticSearch_feat"/>
+                            
+                          </fieldset>
+                        </xsl:for-each>
+                      </xsl:variable>
+                      <xsl:for-each select="$fieldsets">
+                        <xsl:sort select="normalize-space(lower-case(legend))" lang="{$pageLang}"/>
+                        <xsl:sequence select="."/>
+                      </xsl:for-each>
+                    </div>
+                  </xsl:if>-->
+                    <div class="ssFeatFilters">
+                        <fieldset class="ssFieldset" title="person" id="ssFeat1">
+                            <legend><span>Person: </span></legend><input type="text" title="person" placeholder="Zu tippen beginnen…" class="staticSearch.feat staticSearch_feat"/></fieldset>
+                        <fieldset class="ssFieldset" title="place" id="ssFeat2">
+                            <legend><span>Geografikum: </span></legend><input type="text" title="place" placeholder="Zu tippen beginnen…" class="staticSearch.feat staticSearch_feat"/></fieldset>
+                        <fieldset class="ssFieldset" title="institution" id="ssFeat3">
+                            <legend><span>Standort: </span></legend><input type="text" title="institution" placeholder="Zu tippen beginnen…" class="staticSearch.feat staticSearch_feat"/></fieldset>
+                    </div>
+                  
+                    
                     
                     <xsl:if test="not(empty($numFilters))">
                         <div class="ssNumFilters">
@@ -488,11 +587,7 @@
                             </fieldset>
                         </div>
                     </xsl:if>
-                    <span class="postFilterSearchBtn">
-                        <button id="ssDoSearch2">
-                            <xsl:sequence select="hcmc:getCaption('ssDoSearch', $captionLang)"/>
-                        </button>
-                    </span>
+                    
                
                 </xsl:if>
 

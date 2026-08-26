@@ -1636,9 +1636,9 @@ if (this.discardedTerms.length > 0){
         if (pDiscarded !== null){
           this.resultsDiv.appendChild(pDiscarded);
         }
-        let pFound = document.createElement('p');
-        pFound.append(this.captionSet.strDocumentsFound + this.resultSet.getSize());
-        this.resultsDiv.appendChild(pFound);
+        //let pFound = document.createElement('p');
+        //pFound.append(this.captionSet.strDocumentsFound + this.resultSet.getSize());
+        //this.resultsDiv.appendChild(pFound);
         if (this.resultSet.getSize() < 1){
           this.reportNoResults(true);
         } else if (this.resultSet.getSize() > this.resultsLimit){
@@ -1663,9 +1663,9 @@ if (this.discardedTerms.length > 0){
         if (pDiscarded !== null){
           this.resultsDiv.appendChild(pDiscarded);
         }
-        let pFound = document.createElement('p');
-        pFound.append(this.captionSet.strDocumentsFound + this.resultSet.getSize());
-        this.resultsDiv.appendChild(pFound);
+        //let pFound = document.createElement('p');
+        //pFound.append(this.captionSet.strDocumentsFound + this.resultSet.getSize());
+        //this.resultsDiv.appendChild(pFound);
         //Switch depending on the result size:
         //Report that there are no results
         if (this.resultSet.getSize() < 1){
@@ -1936,9 +1936,9 @@ if (this.discardedTerms.length > 0){
       if (pDiscarded !== null){
         this.resultsDiv.appendChild(pDiscarded);
       }
-      let pFound = document.createElement('p');
-      pFound.append(this.captionSet.strDocumentsFound + this.resultSet.getSize());
-      this.resultsDiv.appendChild(pFound);
+      //let pFound = document.createElement('p');
+      //pFound.append(this.captionSet.strDocumentsFound + this.resultSet.getSize());
+      //this.resultsDiv.appendChild(pFound);
       //Switch depending on the result size:
       //Report that there are no results
       if (this.resultSet.getSize() < 1){
