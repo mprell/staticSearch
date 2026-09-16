@@ -461,58 +461,145 @@
                             </fieldset>
                         </div>
                         
-                        <xsl:for-each select="$descFilters">
-                            <xsl:variable name="jsonDoc"
-                                select="unparsed-text(.) => json-to-xml()"
-                                as="document-node()"/>
+                       <xsl:for-each select="$descFilters">
                         
-                            <xsl:variable name="filterName"
-                                select="$jsonDoc//j:string[@key='filterName']"/>
+                        <xsl:variable name="jsonDoc"
+                        select="unparsed-text(.) => json-to-xml()"
+                        as="document-node()"/>
                         
-                            <xsl:if test="$filterName = 'status'">
+                        <xsl:variable name="filterName"
+                        select="string($jsonDoc//j:string[@key='filterName'])"/>
                         
-                                <xsl:variable name="filterId"
-                                    select="$jsonDoc//j:string[@key='filterId']"/>
+                        <xsl:if test="$filterName = 'status'">
                         
-                                <fieldset class="ssFieldset"
-                                    title="{$filterName}"
-                                    id="{$filterId}">
+                        <xsl:variable name="filterId"
+                            select="string($jsonDoc//j:string[@key='filterId'])"/>
                         
-                                    <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 0px auto 0;">
+                        <fieldset class="ssFieldset status-facet-fieldset"
+                            title="{$filterName}"
+                            id="{$filterId}">
                         
-                                        <xsl:for-each select="$jsonDoc//j:map[@key]">
+                            <div class="status-facet">
                         
-                                            <xsl:sort
-                                                select="lower-case(j:string[@key='sortKey'])"/>
+                                <xsl:for-each
+                                    select="$jsonDoc//j:map[@key][j:string[@key='name']]">
                         
-                                            <xsl:variable name="thisOptId"
-                                                select="@key"/>
+                                    <xsl:sort
+                                        select="lower-case(j:string[@key='sortKey'])"/>
                         
-                                            <xsl:variable name="thisOptName"
-                                                select="j:string[@key='name']"/>
+                                    <xsl:variable name="thisOptId"
+                                        select="string(@key)"/>
                         
-                                            <span class="subproject-container-checkbox-and-label">
+                                    <xsl:variable name="thisOptName"
+                                        select="string(j:string[@key='name'])"/>
                         
-                                                <input
-                                                    type="checkbox"
-                                                    title="Status"
-                                                    value="{$thisOptName}"
-                                                    id="{$thisOptId}"
-                                                    class="staticSearch.desc staticSearch_desc"/>
+                                    <xsl:variable name="iconFile" as="xs:string">
+                                        <xsl:choose>
+                                            <xsl:when test="$thisOptName = 'Digitalisate'">
+                                                <xsl:text>image.svg</xsl:text>
+                                            </xsl:when>
                         
-                                                <label for="{$thisOptId}">
+                                            <xsl:when test="$thisOptName = 'Transkription'">
+                                                <xsl:text>book.svg</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'Erläuterungen'">
+                                                <xsl:text>chat.svg</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'Regest'">
+                                                <xsl:text>status-regest.svg</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'Überlieferung'">
+                                                <xsl:text>version.svg</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'XML/TEI'">
+                                                <xsl:text>TEI_Logo.svg</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:otherwise>
+                                                <xsl:text></xsl:text>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:variable>
+                        
+                                    <xsl:variable name="tooltip" as="xs:string">
+                                        <xsl:choose>
+                                            <xsl:when test="$thisOptName = 'Digitalisate'">
+                                                <xsl:text>Digitalisate vorhanden</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'Transkription'">
+                                                <xsl:text>Transkription vorhanden</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'Erläuterungen'">
+                                                <xsl:text>Kommentar oder Erläuterung vorhanden</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'Regest'">
+                                                <xsl:text>Regest vorhanden</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'Überlieferung'">
+                                                <xsl:text>Überlieferungsangaben vorhanden</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:when test="$thisOptName = 'XML/TEI'">
+                                                <xsl:text>XML/TEI vorhanden</xsl:text>
+                                            </xsl:when>
+                        
+                                            <xsl:otherwise>
+                                                <xsl:value-of select="concat($thisOptName, ' vorhanden')"/>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:variable>
+                        
+                                    <!-- Für staticSearch technisch weiterhin eine Checkbox. -->
+                                    <input
+                                        type="checkbox"
+                                        title="Status"
+                                        value="{$thisOptName}"
+                                        id="{$thisOptId}"
+                                        class="staticSearch.desc staticSearch_desc status-facet-checkbox"/>
+                        
+                                    <!-- Sichtbares Bedienelement ist das Icon. -->
+                                    <label
+                                        for="{$thisOptId}"
+                                        class="status-facet-icon"
+                                        title="{$tooltip}">
+                        
+                                        <xsl:choose>
+                                            <xsl:when test="$iconFile != ''">
+                                                <img
+                                                    src="{concat('img/', $iconFile)}"
+                                                    alt=""
+                                                    aria-hidden="true"/>
+                                            </xsl:when>
+                        
+                                            <xsl:otherwise>
+                                                <span class="status-facet-fallback">
                                                     <xsl:value-of select="$thisOptName"/>
-                                                </label>
+                                                </span>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
                         
-                                            </span>
+                                        <span class="status-facet-text">
+                                            <xsl:value-of select="$thisOptName"/>
+                                        </span>
                         
-                                        </xsl:for-each>
+                                    </label>
                         
-                                    </div>
+                                </xsl:for-each>
                         
-                                </fieldset>
+                            </div>
                         
-                            </xsl:if>
+                        </fieldset>
+                        
+                        </xsl:if>
+                        
                         </xsl:for-each>
                         
                </div>
