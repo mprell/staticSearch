@@ -756,6 +756,30 @@ class SSResultSet{
       let displayDate = this.getDisplayDateByDocId(value.docUri);
       let number = this.getNumberByDocId(value.docUri);
       let status = this.getStatusByDocId(value.docUri);
+      
+      // Make the complete result row open the document.
+      // The dedicated KWIC/fid link keeps its own navigation target.
+      tr.setAttribute('tabindex', '0');
+      tr.setAttribute('role', 'link');
+      tr.setAttribute('aria-label', docTitle);
+      
+      tr.addEventListener('click', function(evt){
+      
+        // Keep the search-context link independent:
+        // it contains ssMark, gbResult and the fragment identifier.
+        if (evt.target.closest('a.fidLink')){
+          return;
+        }
+      
+        window.location.href = resultUrl.href;
+      });
+      
+      tr.addEventListener('keydown', function(evt){
+        if ((evt.target === tr) && (evt.key === 'Enter')){
+          evt.preventDefault();
+          window.location.href = resultUrl.href;
+        }
+      });
 
       let tdProject = document.createElement('td');
       tdProject.setAttribute('class', 'category ssResultProject');
@@ -778,21 +802,14 @@ class SSResultSet{
       let tdTitle = document.createElement('td');
       tdTitle.setAttribute('class', 'ssResultTitle');
       if (imgPath.length > 0){
-        let imgA = document.createElement('a');
-        imgA.setAttribute('href', resultUrl.href);
-        imgA.setAttribute('class', 'target ssResultThumbnailLink');
         let img = document.createElement('img');
         img.setAttribute('alt', docTitle);
         img.setAttribute('title', docTitle);
         img.setAttribute('src', imgPath);
-        imgA.appendChild(img);
-        tdTitle.appendChild(imgA);
+        img.setAttribute('class', 'ssResultThumbnail');
+        tdTitle.appendChild(img);
       }
-      let a = document.createElement('a');
-      a.setAttribute('href', resultUrl.href);
-      a.setAttribute('class', 'target');
-      a.appendChild(document.createTextNode(docTitle));
-      tdTitle.appendChild(a);
+      tdTitle.appendChild(document.createTextNode(docTitle));
       tr.appendChild(tdTitle);
 
       if (showContexts){
