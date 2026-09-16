@@ -460,11 +460,62 @@
                                 <span><label for="ssDate1_to">bis: </label><input type="text" maxlength="10" pattern="^\d\d\d\d(-((((01)|(03)|(05)|(07)|(08)|(10)|(12))-((0[1-9])|([12][0-9])|(3[01])))|(((04)|(06)|(09)|(11))-((0[1-9])|([12][0-9])|(30)))|(02-((0[1-9])|([12][0-9]))))|(-((0[123456789])|(1[012]))))?$" title="date-iso" id="ssDate1_to" class="staticSearch.date staticSearch_date" placeholder="1824-12-30" onchange="this.reportValidity()"/></span>
                             </fieldset>
                         </div>
-                        <fieldset class="ssFieldset" title="status" id="ssDesc2">
-                           <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 0px auto 0;"><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Digitalisate" id="ssDesc2_1" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_1">Digitalisate</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Regest" id="ssDesc2_2" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_2">Regest</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="Transkription" id="ssDesc2_3" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_3">Transkription</label></span><span class="subproject-container-checkbox-and-label"><input type="checkbox" title="Status" value="XML/TEI" id="ssDesc2_4" class="staticSearch.desc staticSearch_desc"/><label for="ssDesc2_4">XML/TEI</label></span></div>
-                        </fieldset>
+                        
+                        <xsl:for-each select="$descFilters">
+                            <xsl:variable name="jsonDoc"
+                                select="unparsed-text(.) => json-to-xml()"
+                                as="document-node()"/>
+                        
+                            <xsl:variable name="filterName"
+                                select="$jsonDoc//j:string[@key='filterName']"/>
+                        
+                            <xsl:if test="$filterName = 'status'">
+                        
+                                <xsl:variable name="filterId"
+                                    select="$jsonDoc//j:string[@key='filterId']"/>
+                        
+                                <fieldset class="ssFieldset"
+                                    title="{$filterName}"
+                                    id="{$filterId}">
+                        
+                                    <div style="display: flex; justify-content: center; align-items: center; width: fit-content; margin: 0px auto 0;">
+                        
+                                        <xsl:for-each select="$jsonDoc//j:map[@key]">
+                        
+                                            <xsl:sort
+                                                select="lower-case(j:string[@key='sortKey'])"/>
+                        
+                                            <xsl:variable name="thisOptId"
+                                                select="@key"/>
+                        
+                                            <xsl:variable name="thisOptName"
+                                                select="j:string[@key='name']"/>
+                        
+                                            <span class="subproject-container-checkbox-and-label">
+                        
+                                                <input
+                                                    type="checkbox"
+                                                    title="Status"
+                                                    value="{$thisOptName}"
+                                                    id="{$thisOptId}"
+                                                    class="staticSearch.desc staticSearch_desc"/>
+                        
+                                                <label for="{$thisOptId}">
+                                                    <xsl:value-of select="$thisOptName"/>
+                                                </label>
+                        
+                                            </span>
+                        
+                                        </xsl:for-each>
+                        
+                                    </div>
+                        
+                                </fieldset>
+                        
+                            </xsl:if>
+                        </xsl:for-each>
+                        
                </div>
- 
                   <!-- Now create feature filters. -->
                   <!--<xsl:if test="not(empty($featFilters))">
                     <div class="ssFeatFilters">
