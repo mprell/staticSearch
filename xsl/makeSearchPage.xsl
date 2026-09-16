@@ -549,13 +549,70 @@
                       </xsl:for-each>
                     </div>
                   </xsl:if>-->
-                    <div class="ssFeatFilters">
-                        <fieldset class="ssFieldset" title="person" id="ssFeat1">
-                            <legend><span>Person: </span></legend><input type="text" title="person" placeholder="Zu tippen beginnen…" class="staticSearch.feat staticSearch_feat"/></fieldset>
-                        <fieldset class="ssFieldset" title="place" id="ssFeat2">
-                            <legend><span>Geografikum: </span></legend><input type="text" title="place" placeholder="Zu tippen beginnen…" class="staticSearch.feat staticSearch_feat"/></fieldset>
-                        <fieldset class="ssFieldset" title="institution" id="ssFeat3">
-                            <legend><span>Standort: </span></legend><input type="text" title="institution" placeholder="Zu tippen beginnen…" class="staticSearch.feat staticSearch_feat"/></fieldset>
+                <div class="ssFeatFilters">
+                    
+                        <xsl:variable name="fieldsets" as="element(fieldset)*">
+                    
+                            <xsl:for-each select="$featFilters">
+                    
+                                <xsl:variable name="jsonDoc"
+                                    select="unparsed-text(.) => json-to-xml()"
+                                    as="document-node()"/>
+                    
+                                <xsl:variable name="filterName"
+                                    select="string($jsonDoc//j:string[@key='filterName'])"/>
+                    
+                                <xsl:variable name="filterId"
+                                    select="string($jsonDoc//j:string[@key='filterId'])"/>
+                    
+                                <fieldset class="ssFieldset"
+                                    title="{$filterName}"
+                                    id="{$filterId}">
+                    
+                                    <legend>
+                                        <span>
+                                            <xsl:choose>
+                                                <xsl:when test="$filterName = 'person'">
+                                                    <xsl:text>Person: </xsl:text>
+                                                </xsl:when>
+                                                <xsl:when test="$filterName = 'place'">
+                                                    <xsl:text>Geografikum: </xsl:text>
+                                                </xsl:when>
+                                                <xsl:when test="$filterName = 'institution'">
+                                                    <xsl:text>Standort: </xsl:text>
+                                                </xsl:when>
+                                                <xsl:otherwise>
+                                                    <xsl:value-of select="$filterName"/>
+                                                    <xsl:text>: </xsl:text>
+                                                </xsl:otherwise>
+                                            </xsl:choose>
+                                        </span>
+                                    </legend>
+                    
+                                    <input type="text"
+                                        title="{$filterName}"
+                                        placeholder="Zu tippen beginnen…"
+                                        class="staticSearch.feat staticSearch_feat"/>
+                    
+                                </fieldset>
+                    
+                            </xsl:for-each>
+                    
+                        </xsl:variable>
+                    
+                        <!-- Gewünschte sichtbare Reihenfolge:
+                             Person, Geografikum, Standort -->
+                        <xsl:for-each select="$fieldsets">
+                            <xsl:sort
+                                select="
+                                    if (@title = 'person') then 1
+                                    else if (@title = 'place') then 2
+                                    else if (@title = 'institution') then 3
+                                    else 99"
+                                data-type="number"/>
+                            <xsl:sequence select="."/>
+                        </xsl:for-each>
+                    
                     </div>
                   
                     
