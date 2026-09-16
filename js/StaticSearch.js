@@ -1114,14 +1114,48 @@ class StaticSearch{
       let filters = document.querySelectorAll('fieldset[id ^= "ssDesc"], fieldset[id ^="ssFeat"]');
       for (let filter of filters){
         currXSet = new XSet();
-        let filterName = filter.getAttribute('title');
-        let cbxs = filter.querySelectorAll('input[type="checkbox"]:checked');
-        if ((cbxs.length > 0) && (this.mapFilterData.has(filterName))){
-          for (let cbx of cbxs){
-            currXSet.addArray(this.mapFilterData.get(filterName)[cbx.id].docs);
-          }
-          xSets.push(currXSet);
-        }
+            let filterName = filter.getAttribute('title');
+            let cbxs = filter.querySelectorAll('input[type="checkbox"]:checked');
+            
+            if ((cbxs.length > 0) && (this.mapFilterData.has(filterName))){
+            
+              // Statuswerte werden mit UND verknüpft.
+              if (filterName === 'status'){
+            
+                let first = true;
+            
+                for (let cbx of cbxs){
+            
+                  let cbxSet = new XSet();
+            
+                  cbxSet.addArray(
+                    this.mapFilterData.get(filterName)[cbx.id].docs
+                  );
+            
+                  if (first){
+                    currXSet = cbxSet;
+                    first = false;
+                  }
+                  else{
+                    currXSet = currXSet.intersection(cbxSet);
+                  }
+                }
+            
+              }
+            
+              // Alle anderen Descriptor-Filter behalten ihr bisheriges ODER.
+              else{
+            
+                for (let cbx of cbxs){
+                  currXSet.addArray(
+                    this.mapFilterData.get(filterName)[cbx.id].docs
+                  );
+                }
+            
+              }
+            
+              xSets.push(currXSet);
+            }
       }
 
       //Find each bool selector and get its descriptor.
