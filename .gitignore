@@ -28,6 +28,8 @@ VERSION
 
 # Temporary files from the build #
 ssTemp_*
+hs_err_pid*.log
+replay_pid*.log
 
 # Generated configuration file #
 config.xsl
