@@ -511,7 +511,7 @@
                                                 <xsl:text>status-regest.svg</xsl:text>
                                             </xsl:when>
                         
-                                            <xsl:when test="$thisOptName = 'Überlieferung'">
+                                            <xsl:when test="$thisOptName = 'Überlieferungsangaben'">
                                                 <xsl:text>version.svg</xsl:text>
                                             </xsl:when>
                         
@@ -543,7 +543,7 @@
                                                 <xsl:text>Regest vorhanden</xsl:text>
                                             </xsl:when>
                         
-                                            <xsl:when test="$thisOptName = 'Überlieferung'">
+                                            <xsl:when test="$thisOptName = 'Überlieferungsangaben'">
                                                 <xsl:text>Überlieferungsangaben vorhanden</xsl:text>
                                             </xsl:when>
                         

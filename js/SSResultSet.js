@@ -991,7 +991,7 @@ class SSResultSet{
     if ((s.indexOf('kommentar') >= 0)||(s.indexOf('erläuter') >= 0)){return 'status-comment';}
     if (s.indexOf('digitalisat') >= 0){return 'status-image';}
     if (s.indexOf('regest') >= 0){return 'status-regest';}
-    if (s.indexOf('überliefer') >= 0){return 'status-tradition';}
+    if (s.indexOf('überlieferung') >= 0){return 'status-tradition';}
     if ((s.indexOf('xml') >= 0)||(s.indexOf('tei') >= 0)){return 'status-xml';}
     return 'status-generic';
   }
