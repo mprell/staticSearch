@@ -121,7 +121,7 @@
   <property name="ssSearchFilePath" value="${configDir.converted}/${config.params.searchPage.file}"/>
 
   <!--The name of the collection dir, derived from the search file-->
-  <dirname property="ssCollectionDirName" file="${ssSearchFilePath}"/>
+  <property name="ssCollectionDirName" location="${configDir}/.."/>
 
   <pathconvert property="ssCollectionDirName.converted" dirsep="/">
     <path location="${ssCollectionDirName}" />

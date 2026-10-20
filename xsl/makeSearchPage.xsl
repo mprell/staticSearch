@@ -148,7 +148,7 @@
             with a link element pointing to the CSS file.</xd:desc>
     </xd:doc>
     <xsl:template match="style[@id='ssCss'] | link[@id='ssCss']">
-        <link rel="stylesheet" href="{$output.dir}/ssSearch.css" id="ssCss"/>
+        <link rel="stylesheet" href="/{$output.dir}/ssSearch.css" id="ssCss"/>
         <!--<style id="ssCss">
             <xsl:comment>
                 <xsl:value-of select="$css" disable-output-escaping="yes"/>
@@ -171,7 +171,7 @@
                 <meta charset="UTF-8"/>
             </xsl:if>
             <xsl:if test="not(*[@id='ssCss'])">
-                <link rel="stylesheet" href="{$output.dir}/ssSearch.css" id="ssCss"/>
+                <link rel="stylesheet" href="/{$output.dir}/ssSearch.css" id="ssCss"/>
             </xsl:if>
             <xsl:apply-templates select="node()"/>
         </xsl:copy>
@@ -221,7 +221,7 @@
 
             <!--Now add the script for the staticSearch library. -->
 
-            <script src="{$output.dir}/ssSearch.js"><!-- Don't self-close script tags. --></script>
+            <script src="/{$output.dir}/ssSearch.js"><!-- Don't self-close script tags. --></script>
           
             <xsl:comment>
               Note that if you want to debug a problem with the JavaScript, you can
@@ -231,7 +231,7 @@
           
             <!--Now add the script that initializes the search object. -->
           
-            <script src="{$output.dir}/ssInitialize.js"><!-- Don't self-close script tags. --></script>
+            <script src="/{$output.dir}/ssInitialize.js"><!-- Don't self-close script tags. --></script>
             <noscript><xsl:value-of select="hcmc:getCaption('ssScriptRequired', $captionLang)"/></noscript>
 
             <!--Now create the form-->
@@ -244,7 +244,7 @@
                 data-resultsperpage="{$results.resultsPerPage}"
                 onsubmit="return false;"
                 data-versionstring="{$versionString}"
-                data-ssfolder="{$output.dir}"
+                data-ssfolder="/{$output.dir}"
                 data-kwictruncatestring="{$createContexts.kwicTruncateString}"
                 data-resultslimit="{$results.maxResults}"
                 >
@@ -574,7 +574,7 @@
                                         <xsl:choose>
                                             <xsl:when test="$iconFile != ''">
                                                 <img
-                                                    src="{concat('img/', $iconFile)}"
+                                                    src="{concat('/img/', $iconFile)}"
                                                     alt=""
                                                     aria-hidden="true"/>
                                             </xsl:when>

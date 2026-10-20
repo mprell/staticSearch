@@ -655,7 +655,7 @@ class SSResultSet{
     let allEntries = Array.from(this.mapDocs.entries());
     let navigationDocs = allEntries.map(function(entry){
       let value = entry[1];
-      return new URL(value.docUri, window.location.href).href;
+      return new URL(value.docUri, window.location.origin + '/').href;
     });
     try{
       sessionStorage.setItem('gbSearchNavigation', JSON.stringify({
@@ -744,7 +744,7 @@ class SSResultSet{
       //Use the index in the complete sorted result set, not the page-local
       //index, so individual-document navigation works across page boundaries.
       let currentResultIndex = startIndex + localIndex;
-      let resultUrl = new URL(value.docUri, window.location.href);
+      let resultUrl = new URL(value.docUri, window.location.origin + '/');
       resultUrl.searchParams.set('gbResult', String(currentResultIndex));
 
       let tr = document.createElement('tr');
@@ -830,7 +830,7 @@ class SSResultSet{
             if (((value.contexts[i].hasOwnProperty('fid'))&&(value.contexts[i].fid != ''))){
               let fid = value.contexts[i].hasOwnProperty('fid')? value.contexts[i].fid : '';
               let a2 = document.createElement('a');
-              let contextUrl = new URL(value.docUri, window.location.href);
+              let contextUrl = new URL(value.docUri, window.location.origin + '/');
               contextUrl.searchParams.set('ssMark', cleanMark);
               contextUrl.searchParams.set('gbResult', String(currentResultIndex));
               contextUrl.hash = fid;

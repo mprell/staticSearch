@@ -157,7 +157,7 @@
         directory that contains the search document, which we assume is the project directory that contains
         all of the files that static search is meant to index.</xd:desc>
     </xd:doc>
-    <xsl:variable name="collectionDir" select="string-join(tokenize($searchDocUri,'/')[not(position() = last())],'/')" as="xs:string?"/>
+    <xsl:variable name="collectionDir" select="replace(string(resolve-uri('../', $configUri)), '/$', '')" as="xs:string"/>
     
     
     <xd:doc>
