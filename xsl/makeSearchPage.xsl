@@ -232,6 +232,9 @@
             <!--Now add the script that initializes the search object. -->
           
             <script src="/{$output.dir}/ssInitialize.js"><!-- Don't self-close script tags. --></script>
+
+            <!-- Goethe-Biographica: preserve result pagination and detail navigation. -->
+            <script src="/js/resultNavigation.js"><!-- Don't self-close script tags. --></script>
             <noscript><xsl:value-of select="hcmc:getCaption('ssScriptRequired', $captionLang)"/></noscript>
 
             <!--Now create the form-->
