@@ -431,7 +431,7 @@ class SSResultSet{
       //Works for ISO-like machine-readable dates such as YYYY, YYYY-MM,
       //YYYY-MM-DD and extended values because the numeric components are
       //compared in sequence rather than as display text.
-      let parts = s.match(/-?\d+/g);
+      let parts = s.match(/\d+/g);
       return {
         empty: false,
         parts: parts ? parts.map(function(n){return parseInt(n, 10);}) : [],
