@@ -116,6 +116,7 @@
             <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
                 <head>
                     <title>Static Search Report: <xsl:value-of select="$collectionDir"/></title>
+                    <meta name="staticSearch" content="exclude"/>
                     <link rel="stylesheet" href="ssReports.css"/>
                 </head>
                 <body>
