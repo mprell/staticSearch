@@ -279,19 +279,14 @@
                             <xsl:text>Neue Suche</xsl:text>
                         </button>
                         <script>
-					// this function gets called by Hilfe onclick
-					function toggleSearchinfoText() {
-						// this.classList.toggle('active');
-						document.querySelector('#searchinfo').innerHTML += "<span id='searchinfo-text'>Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href='/projekt/how-to-use-api.html'>Hinweise zur Benutzung</a>.</span>";
-						document.querySelector('#searchinfo-text').classList.toggle('visible');
-					}
-				</script>
+                            function toggleSearchinfoText() {
+                            const hilfetext = document.getElementById('searchinfo-text');
+                            hilfetext.classList.toggle('visible');
+                            }
+                        </script>
 
-				<div onclick="toggleSearchinfoText();" onmouseover="this.style.textDecoration='none';" onmouseout="this.style.textDecoration='none';" style="margin-right: 10px; cursor: pointer; text-decoration: none;" title="Hilfe anzeigen">
-					Hilfe
-
-					<span id="searchinfo"><span id="searchinfo-text" class="">Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>.</span><span id="searchinfo-text">Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>.</span><span id="searchinfo-text">Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>.</span></span>
-				</div>
+                        <div onclick="toggleSearchinfoText();" onmouseover="this.style.textDecoration='none';" onmouseout="this.style.textDecoration='none';" style="margin-right: 10px; cursor: pointer; text-decoration: none;" title="Hilfe anzeigen">Hilfe
+                            <span id="searchinfo-text">Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>. Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>. Die derzeit durchsuchbaren Zeugnisse umfassen den gesamten Zeitraum der Lebenszeit Goethes. Sie sind je nach Projekt aber auch weiter eingegrenzt. Vgl. Näheres hierzu bei den Verfügbarkeitshinweisen auf den Seiten der Projekte.<br/>Zur Erläuterung der Suchfunktionalitäten siehe die <a href="/projekt/how-to-use-api.html">Hinweise zur Benutzung</a>.</span></div>
                     </div>
                         
                     
