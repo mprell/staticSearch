@@ -454,8 +454,8 @@
                     </xsl:if>-->
                         <div class="ssDateFilters">
                             <fieldset class="ssFieldset" title="date-iso" id="ssDate1">
-                                <span><label for="ssDate1_from">Datum von: </label><input type="text" maxlength="10" pattern="^\d\d\d\d(-((((01)|(03)|(05)|(07)|(08)|(10)|(12))-((0[1-9])|([12][0-9])|(3[01])))|(((04)|(06)|(09)|(11))-((0[1-9])|([12][0-9])|(30)))|(02-((0[1-9])|([12][0-9]))))|(-((0[123456789])|(1[012]))))?$" title="date-iso" id="ssDate1_from" class="staticSearch.date staticSearch_date" placeholder="1762-01-25" onchange="this.reportValidity()"/></span>
-                                <span><label for="ssDate1_to">bis: </label><input type="text" maxlength="10" pattern="^\d\d\d\d(-((((01)|(03)|(05)|(07)|(08)|(10)|(12))-((0[1-9])|([12][0-9])|(3[01])))|(((04)|(06)|(09)|(11))-((0[1-9])|([12][0-9])|(30)))|(02-((0[1-9])|([12][0-9]))))|(-((0[123456789])|(1[012]))))?$" title="date-iso" id="ssDate1_to" class="staticSearch.date staticSearch_date" placeholder="1824-12-30" onchange="this.reportValidity()"/></span>
+                                <span><label for="ssDate1_from">Datum von: </label><input type="text" maxlength="10" pattern="^\d\d\d\d(-((((01)|(03)|(05)|(07)|(08)|(10)|(12))-((0[1-9])|([12][0-9])|(3[01])))|(((04)|(06)|(09)|(11))-((0[1-9])|([12][0-9])|(30)))|(02-((0[1-9])|([12][0-9]))))|(-((0[123456789])|(1[012]))))?$" title="date-iso" id="ssDate1_from" class="staticSearch.date staticSearch_date" placeholder="1753-12-31" onchange="this.reportValidity()"/></span>
+                                <span><label for="ssDate1_to">bis: </label><input type="text" maxlength="10" pattern="^\d\d\d\d(-((((01)|(03)|(05)|(07)|(08)|(10)|(12))-((0[1-9])|([12][0-9])|(3[01])))|(((04)|(06)|(09)|(11))-((0[1-9])|([12][0-9])|(30)))|(02-((0[1-9])|([12][0-9]))))|(-((0[123456789])|(1[012]))))?$" title="date-iso" id="ssDate1_to" class="staticSearch.date staticSearch_date" placeholder="1832-03-22" onchange="this.reportValidity()"/></span>
                             </fieldset>
                         </div>
                         
