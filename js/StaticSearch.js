@@ -191,6 +191,9 @@ class StaticSearch{
       //A Map object that will be populated with filter data retrieved by AJAX.
       this.mapFilterData = new Map();
 
+      // True, sobald eine Suche eine eigene Treffermenge geliefert hat.
+      this.entityCountsFromResults = false;
+
       //A Map object that will track the retrieval of search filter data and
       //other JSON files we need to get. Note: one of the files is txt, not JSON.
       this.mapJsonRetrieved = new Map();
@@ -413,6 +416,7 @@ class StaticSearch{
       this.mapJsonRetrieved.set(json.filterId, GOT);
       if (path.match(/ssFeat/)){
         this.setupFeatFilter(json.filterId, json.filterName);
+        this.updateEntityCounts();
       }
       return;
     }
@@ -485,6 +489,48 @@ class StaticSearch{
     else{
       console.log('ERROR: failed to find feature filter ' + filterId);
       return false;
+    }
+  }
+
+  /**
+   * Zahl der unterschiedlichen benannten Entitaeten in der aktuellen
+   * Treffermenge hinter den Facettenueberschriften anzeigen.
+   * Ohne ausgefuehrte Suche wird der gesamte Facettenbestand gezaehlt.
+   * Verwendet nur bereits geladene Indexdaten; kein zusaetzlicher Fetch.
+   */
+  updateEntityCounts(){
+    const matchingDocs = this.entityCountsFromResults
+      ? new Set(this.resultSet.mapDocs.keys()) : null;
+
+    for (const facet of [{id: 'ssFeat1', name: 'person'},
+                         {id: 'ssFeat2', name: 'place'}]){
+      const data = this.mapFilterData.get(facet.name);
+      const legend = document.querySelector('#' + facet.id + ' legend');
+      if (!data || !legend){continue;}
+
+      let count = 0;
+      const allowedIds = new Set();
+      for (const [id, entry] of Object.entries(data)){
+        if (!id.startsWith(facet.id + '_') || !entry ||
+            typeof entry.name !== 'string' || !entry.name.trim() ||
+            !Array.isArray(entry.docs)){continue;}
+        if (!matchingDocs || entry.docs.some(uri => matchingDocs.has(uri))){
+          count++;
+          allowedIds.add(id);
+        }
+      }
+
+      // Dieselbe Entitaetenmenge auch fuer die Typeahead-Vorschlaege nutzen.
+      const typeAhead = this.mapFeatFilters.get(facet.name);
+      if (typeAhead){typeAhead.setAllowedEntityIds(allowedIds);}
+
+      let counter = legend.querySelector('.ssEntityCount');
+      if (!counter){
+        counter = document.createElement('span');
+        counter.className = 'ssEntityCount';
+        legend.appendChild(counter);
+      }
+      counter.textContent = ' (' + count.toLocaleString('de-DE') + ')';
     }
   }
 
@@ -1064,6 +1110,8 @@ class StaticSearch{
       history.pushState({time: Date.now()}, '', url);
 
     //Emit an event to notify that the form has been cleared.
+      this.entityCountsFromResults = false;
+      this.updateEntityCounts();
     window.dispatchEvent(new CustomEvent('ssFormCleared'));
       return true;
     }
@@ -1683,6 +1731,8 @@ if (this.discardedTerms.length > 0){
             this.paginateResults();
           }
         }
+        this.entityCountsFromResults = true;
+        this.updateEntityCounts();
         this.isSearching = false;
         this.searchFinishedHook(1);
         window.dispatchEvent(new CustomEvent('ssSearchCompleted', {detail: {'hits': this.resultSet.getSize()}}));
@@ -1714,6 +1764,8 @@ if (this.discardedTerms.length > 0){
             this.paginateResults();
           }
         }
+        this.entityCountsFromResults = true;
+        this.updateEntityCounts();
         this.isSearching = false;
         this.searchFinishedHook(2);
         return (this.resultSet.getSize() > 0);
@@ -1987,6 +2039,8 @@ if (this.discardedTerms.length > 0){
           this.paginateResults();
         }
       }
+      this.entityCountsFromResults = true;
+      this.updateEntityCounts();
       this.isSearching = false;
       this.searchFinishedHook(4);
       //Emit an event to notify that the search is completed, including the hit count.

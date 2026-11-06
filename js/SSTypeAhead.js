@@ -49,6 +49,8 @@
     //the string values of items rather than ids, we create a map
     //of values to ids.
     this.filterMap = new Map();
+    // null = noch keine Eingrenzung; danach nur IDs der aktuellen Treffer.
+    this.allowedEntityIds = null;
     for (let key of Object.keys(this.filterData)){
       if (this.reId.test(key)){
         this.filterMap.set(this.filterData[key].name, key);
@@ -72,6 +74,18 @@
     this.populating = false;
   }
   
+  /**
+   * Einschraenkung der Vorschlaege auf die zur aktuellen Trefferliste
+   * passenden Entitaeten-IDs. Bereits ausgewaehlte Checkboxen bleiben erhalten.
+   */
+  setAllowedEntityIds(ids){
+    this.allowedEntityIds = ids;
+    // Eine gerade geoeffnete Liste sofort an die neue Auswahl anpassen.
+    const wasOpen = this.menu.hasChildNodes();
+    this.clearSuggestions();
+    if (wasOpen){this.populate();}
+  }
+
   /** @function SSTypeAhead~clearSuggestions
   * @description This simply empties the drop-down suggestions menu.
   */
@@ -133,7 +147,8 @@
       //New approach from JT for more speed.
       // JT added new map approach
       this.filterMap.forEach((id, name) => {
-        if (name.match(re) && this.reId.test(id)){
+        if (name.match(re) && this.reId.test(id) &&
+            (this.allowedEntityIds === null || this.allowedEntityIds.has(id))){
             let d = document.createElement('div');
             d.setAttribute('data-val', name);
             d.setAttribute('data-id', id);
