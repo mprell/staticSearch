@@ -519,6 +519,19 @@ create a new file? (o=overwrite, n=new)"
 
     <echo message="Moving ${tempSearchPageOutput} to overwrite ${ssSearchFilePath}"/>
     <move file="${tempSearchPageOutput}" tofile="${ssSearchFilePath}"/>
+    
+    <!-- Versionskennung für Such-JavaScript automatisch erzeugen -->
+    <tstamp>
+      <format property="ssJsCacheVersion" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
+    
+    <!-- Versionskennung in der Suchseite setzen -->
+    <replaceregexp
+      file="${ssSearchFilePath}"
+      match="(/staticSearch/search/ssSearch\.js)(\?v=[0-9]+)?"
+      replace="\1?v=${ssJsCacheVersion}"
+      flags="g"
+      byline="true"/>
 
   </target>
   
